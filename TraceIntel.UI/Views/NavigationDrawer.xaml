@@ -1,0 +1,123 @@
+<UserControl x:Class="TraceIntel.UI.Views.NavigationDrawer"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:local="clr-namespace:TraceIntel.UI.Views"
+             xmlns:vm="clr-namespace:TraceIntel.UI.ViewModels"
+             mc:Ignorable="d"
+             d:DesignHeight="800" d:DesignWidth="240">
+  <UserControl.Resources>
+    <!-- Icon style (TextBlock placeholder) -->
+    <Style x:Key="NavIconStyle" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="16" />
+      <Setter Property="Foreground" Value="{DynamicResource ForegroundBrush}" />
+      <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+    <Style x:Key="NavItemStyle" TargetType="Button">
+      <Setter Property="HorizontalContentAlignment" Value="Left" />
+      <Setter Property="Padding" Value="16,12" />
+      <Setter Property="Margin" Value="0,6,0,6" />
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="Foreground" Value="{DynamicResource ForegroundBrush}" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border Background="{TemplateBinding Background}"
+                    CornerRadius="6"
+                    Padding="{TemplateBinding Padding}">
+              <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Style="{StaticResource NavIconStyle}"
+                           Text="{Binding Tag, RelativeSource={RelativeSource AncestorType=Button}}"
+                           VerticalAlignment="Center" />
+                <TextBlock Text="{TemplateBinding Content}"
+                           Foreground="{TemplateBinding Foreground}"
+                           Margin="12,0,0,0"
+                           VerticalAlignment="Center"
+                           FontWeight="SemiBold"
+                           FontSize="14"/>
+              </StackPanel>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="#1C1C28" />
+                <Setter Property="Foreground" Value="#6C5CE7" />
+              </Trigger>
+              <Trigger Property="IsPressed" Value="True">
+                <Setter Property="Background" Value="#242436" />
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+  </UserControl.Resources>
+
+  <!-- Premium distinct dark background sidebar with elegant right dividing border -->
+  <Border Background="#11111B" BorderBrush="#232333" BorderThickness="0,0,1,0" Padding="18" VerticalAlignment="Stretch">
+    <StackPanel>
+      <!-- Title header with a modern glow accent -->
+      <TextBlock Text="TRACE X" FontSize="26" FontWeight="Bold"
+                 Foreground="#6C5CE7" Margin="8,10,0,32"/>
+      
+      <!-- Interactive Highlight Navigation Buttons -->
+      <Button Content="Dashboard" Tag="📊" Command="{Binding NavigateCommand}" CommandParameter="Dashboard">
+        <Button.Style>
+          <Style TargetType="Button" BasedOn="{StaticResource NavItemStyle}">
+            <Style.Triggers>
+              <DataTrigger Binding="{Binding SelectedTabIndex}" Value="0">
+                <Setter Property="Background" Value="#1C1C2C" />
+                <Setter Property="Foreground" Value="#9F8DFF" />
+              </DataTrigger>
+            </Style.Triggers>
+          </Style>
+        </Button.Style>
+      </Button>
+
+      <Button Content="Trace" Tag="🔍" Command="{Binding NavigateCommand}" CommandParameter="Trace">
+        <Button.Style>
+          <Style TargetType="Button" BasedOn="{StaticResource NavItemStyle}">
+            <Style.Triggers>
+              <DataTrigger Binding="{Binding SelectedTabIndex}" Value="1">
+                <Setter Property="Background" Value="#1C1C2C" />
+                <Setter Property="Foreground" Value="#9F8DFF" />
+              </DataTrigger>
+              <DataTrigger Binding="{Binding SelectedTabIndex}" Value="2">
+                <Setter Property="Background" Value="#1C1C2C" />
+                <Setter Property="Foreground" Value="#9F8DFF" />
+              </DataTrigger>
+            </Style.Triggers>
+          </Style>
+        </Button.Style>
+      </Button>
+
+      <Button Content="DNS Recon" Tag="🌐" Command="{Binding NavigateCommand}" CommandParameter="DnsRecon">
+        <Button.Style>
+          <Style TargetType="Button" BasedOn="{StaticResource NavItemStyle}">
+            <Style.Triggers>
+              <DataTrigger Binding="{Binding SelectedTabIndex}" Value="3">
+                <Setter Property="Background" Value="#1C1C2C" />
+                <Setter Property="Foreground" Value="#9F8DFF" />
+              </DataTrigger>
+            </Style.Triggers>
+          </Style>
+        </Button.Style>
+      </Button>
+
+      <Button Content="Settings" Tag="⚙" Command="{Binding NavigateCommand}" CommandParameter="Settings">
+        <Button.Style>
+          <Style TargetType="Button" BasedOn="{StaticResource NavItemStyle}">
+            <Style.Triggers>
+              <DataTrigger Binding="{Binding SelectedTabIndex}" Value="4">
+                <Setter Property="Background" Value="#1C1C2C" />
+                <Setter Property="Foreground" Value="#9F8DFF" />
+              </DataTrigger>
+            </Style.Triggers>
+          </Style>
+        </Button.Style>
+      </Button>
+    </StackPanel>
+  </Border>
+</UserControl>

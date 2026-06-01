@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="TraceIntel.Core/TraceIntel.Core.csproj" />
+  <Project Path="TraceIntel.UI/TraceIntel.UI.csproj" />
+</Solution>
