@@ -1,0 +1,444 @@
+<UserControl x:Class="TraceIntel.UI.Views.TraceView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:converters="clr-namespace:TraceIntel.UI.Converters"
+             xmlns:local="clr-namespace:TraceIntel.UI.Views"
+             mc:Ignorable="d"
+             d:DesignHeight="700" d:DesignWidth="1100">
+
+    <UserControl.Resources>
+        <converters:BoolToStatusConverter x:Key="BoolToStatusConverter"/>
+        <converters:InverseBoolConverter x:Key="InverseBoolConverter"/>
+        <converters:JoinConverter x:Key="JoinConverter"/>
+        <converters:StringEmptyToVisibilityConverter x:Key="StringEmptyToVisibilityConverter"/>
+        <converters:RadioStringEqualsConverter x:Key="RadioStringEqualsConverter"/>
+        <converters:ProgressBarWidthConverter x:Key="ProgressBarWidthConverter"/>
+        <converters:HopStatusBrushConverter x:Key="HopStatusBrushConverter"/>
+
+        <DataTemplate x:Key="HopColumnHeaderTemplate">
+            <StackPanel>
+                <TextBlock Text="{Binding HopNumber, StringFormat=Hop {0}}"
+                           FontWeight="Bold"
+                           Foreground="White"/>
+                <TextBox Height="28"
+                          Margin="0,6,0,0"
+                          Padding="6,2"
+                          Text="{Binding FilterText, UpdateSourceTrigger=PropertyChanged}"
+                          ToolTip="Filter this hop (IP)"/>
+            </StackPanel>
+        </DataTemplate>
+
+        <DataTemplate x:Key="HopCellTemplate">
+            <Border CornerRadius="6"
+                    Padding="6,3"
+                    Background="{Binding IsTimeout, Converter={StaticResource HopStatusBrushConverter}}"
+                    ToolTip="{Binding IP}">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding IP}" Foreground="White" />
+                    <TextBlock Text="{Binding LatencyText}"
+                               Margin="8,0,0,0"
+                               Foreground="#D7D7FF"
+                               FontSize="12"/>
+                </StackPanel>
+            </Border>
+        </DataTemplate>
+
+        <DataTemplate x:Key="HopCellTemplatePrimary">
+            <Border CornerRadius="7"
+                    Padding="8,4"
+                    Background="{Binding IsTimeout, Converter={StaticResource HopStatusBrushConverter}}"
+                    ToolTip="{Binding IP}">
+                <StackPanel>
+                    <TextBlock Text="{Binding IP}"
+                               Foreground="White"
+                               FontWeight="SemiBold"/>
+                    <TextBlock Text="{Binding LatencyText}"
+                               Foreground="#D7D7FF"
+                               FontSize="12"
+                               Margin="0,2,0,0"/>
+                </StackPanel>
+            </Border>
+        </DataTemplate>
+
+        <Style x:Key="PremiumRadio" TargetType="RadioButton">
+            <Setter Property="Foreground" Value="#E0E0E0"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Margin" Value="0,0,12,0"/>
+        </Style>
+
+        <Style x:Key="StopButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Background" Value="#E74C3C"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#F75C4C"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="ExportButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Background" Value="#27AE60"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#37BE70"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style TargetType="DataGrid">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource ForegroundBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="GridLinesVisibility" Value="None"/>
+            <Setter Property="HeadersVisibility" Value="Column"/>
+            <Setter Property="AutoGenerateColumns" Value="False"/>
+            <Setter Property="CanUserAddRows" Value="False"/>
+            <Setter Property="CanUserDeleteRows" Value="False"/>
+            <Setter Property="IsReadOnly" Value="True"/>
+            <Setter Property="SelectionMode" Value="Single"/>
+            <Setter Property="RowBackground" Value="{DynamicResource SurfaceBrush}"/>
+            <Setter Property="AlternatingRowBackground" Value="{DynamicResource SurfaceElevatedBrush}"/>
+        </Style>
+
+        <Style TargetType="DataGridRow">
+            <Setter Property="Background" Value="#2D2D3A"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsEarlyFail}" Value="True">
+                    <Setter Property="Background" Value="#33262A"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style TargetType="DataGridColumnHeader">
+            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Padding" Value="10"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+            <Setter Property="BorderThickness" Value="0,0,1,1"/>
+        </Style>
+
+        <Style TargetType="DataGridCell">
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="DataGridCell">
+                        <Border Padding="{TemplateBinding Padding}" Background="{TemplateBinding Background}">
+                            <ContentPresenter VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="ProgressBar">
+            <Setter Property="Height" Value="30"/>
+            <Setter Property="Background" Value="#2D2D3A"/>
+            <Setter Property="Foreground" Value="#6C5CE7"/>
+            <Setter Property="BorderBrush" Value="#6C5CE7"/>
+            <Setter Property="BorderThickness" Value="2"/>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/> <!-- Input Section -->
+            <RowDefinition Height="*"/>    <!-- Results Section -->
+            <RowDefinition Height="Auto"/> <!-- Local Status -->
+        </Grid.RowDefinitions>
+
+        <!-- Input Section: Only visible in Traceroute Diagnostics -->
+        <Border Grid.Row="0"
+                Background="{DynamicResource SurfaceElevatedBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="1"
+                CornerRadius="14"
+                Padding="18"
+                Margin="0,0,0,22">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <Grid Grid.Column="0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0"
+                               Text="Targets (paste one per line, or comma/space separated)"
+                               Style="{StaticResource SectionLabel}"
+                               FontWeight="SemiBold"
+                               Margin="0,0,0,10"/>
+
+                    <Grid Grid.Row="1">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Domains Input (paste-friendly) -->
+                        <Grid Grid.Column="0">
+                            <TextBox x:Name="TargetsInputBox"
+                                     Text="{Binding DomainsInput, UpdateSourceTrigger=PropertyChanged}"
+                                     AcceptsReturn="True"
+                                     AcceptsTab="True"
+                                     TextWrapping="Wrap"
+                                     VerticalScrollBarVisibility="Auto"
+                                     HorizontalScrollBarVisibility="Disabled"
+                                     MinHeight="110"
+                                     MaxHeight="170"
+                                     ToolTip="Examples: google.com | 8.8.8.8 | https://example.com/path"/>
+
+                            <!-- Simple watermark -->
+                            <TextBlock IsHitTestVisible="False"
+                                       Margin="14,12,14,0"
+                                       Foreground="#7F7FA3"
+                                       Text="google.com&#x0a;8.8.8.8&#x0a;https://example.com/path"
+                                       Visibility="{Binding DomainsInput, Converter={StaticResource StringEmptyToVisibilityConverter}}"/>
+                        </Grid>
+
+                        <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Top">
+                            <TextBlock Text="Trace depth"
+                                       Foreground="#C9C9E6"
+                                       FontWeight="SemiBold"
+                                       Margin="0,0,0,8"/>
+
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                <RadioButton Content="5 Hops"
+                                             Style="{StaticResource PremiumRadio}"
+                                             IsChecked="{Binding HopMode, Converter={StaticResource RadioStringEqualsConverter}, ConverterParameter=5}"/>
+                                <RadioButton Content="Complete"
+                                             Style="{StaticResource PremiumRadio}"
+                                             IsChecked="{Binding HopMode, Converter={StaticResource RadioStringEqualsConverter}, ConverterParameter=Complete}"/>
+                                <RadioButton Content="Custom"
+                                             Style="{StaticResource PremiumRadio}"
+                                             IsChecked="{Binding HopMode, Converter={StaticResource RadioStringEqualsConverter}, ConverterParameter=Custom}"/>
+                            </StackPanel>
+
+                            <TextBox Text="{Binding CustomMaxHops, UpdateSourceTrigger=PropertyChanged}"
+                                     Width="120"
+                                     Height="40"
+                                     VerticalContentAlignment="Center"
+                                     IsEnabled="{Binding HopMode, Converter={StaticResource RadioStringEqualsConverter}, ConverterParameter=Custom}"
+                                     ToolTip="Custom max hops (1-255)"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <TextBlock Grid.Row="2"
+                               Margin="0,10,0,0"
+                               Foreground="{DynamicResource SecondaryForegroundBrush}"
+                               Text="Tip: Paste domains, IPs or URLs. Invalid entries are skipped automatically."/>
+                </Grid>
+
+                <!-- Actions -->
+                <StackPanel Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Bottom">
+                    <Button Content="Start Trace"
+                            Command="{Binding StartCommand}"
+                            Style="{StaticResource BaseButton}"
+                            IsEnabled="{Binding IsRunning, Converter={StaticResource InverseBoolConverter}}"
+                            Width="140" Margin="0,0,0,10"/>
+                    <Button Content="Stop"
+                            Command="{Binding StopCommand}"
+                            Style="{StaticResource DangerButton}"
+                            IsEnabled="{Binding IsRunning}"
+                            Width="140" Margin="0,0,0,10"/>
+                    <ComboBox ItemsSource="{Binding ExportFormats}"
+                              SelectedItem="{Binding SelectedExportFormat}"
+                              Width="140"
+                              Height="32"
+                              Margin="0,0,0,10"/>
+                    <Button Content="Export Data"
+                            Command="{Binding ExportCommand}"
+                            Style="{StaticResource SuccessButton}"
+                            Width="140"
+                            Margin="0,0,0,10"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Results tabs -->
+        <TabControl Grid.Row="1" TabStripPlacement="Top" Margin="0,0,0,16" Background="{DynamicResource BackgroundBrush}" BorderThickness="0">
+            <TabItem Header="Routing Table">
+                <Grid Margin="0,10,0,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <Grid Grid.Row="0" Margin="0,0,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0" Orientation="Vertical">
+                            <TextBlock Text="Search (domain / destination / hop IP)"
+                                       Style="{StaticResource SectionLabel}"
+                                       FontWeight="SemiBold"
+                                       Margin="0,0,0,6"/>
+                            <TextBox x:Name="GlobalSearchBox"
+                                     Height="40"
+                                     Text="{Binding GlobalSearchText, UpdateSourceTrigger=PropertyChanged}"
+                                     ToolTip="Search across domain, destination, and all hops (Ctrl+F to focus)"
+                                     VerticalContentAlignment="Center"/>
+                        </StackPanel>
+                        <TextBlock Grid.Column="1"
+                                   Margin="12,0,0,0"
+                                   VerticalAlignment="Center"
+                                   Foreground="{DynamicResource ForegroundBrush}"
+                                   Text="{Binding HopColumnCount, StringFormat=Columns: {0} hops}"/>
+                    </Grid>
+
+                    <DataGrid x:Name="RoutingDataGrid"
+                               Grid.Row="1"
+                               ItemsSource="{Binding RoutingRowsView}"
+                               AutoGenerateColumns="False"
+                               CanUserSortColumns="True"
+                               ClipboardCopyMode="ExcludeHeader"
+                               SelectionUnit="CellOrRowHeader"
+                               SelectionMode="Extended"
+                               EnableRowVirtualization="True"
+                               EnableColumnVirtualization="True"
+                               VirtualizingPanel.IsVirtualizing="True"
+                               VirtualizingPanel.VirtualizationMode="Recycling"
+                               ScrollViewer.CanContentScroll="True"
+                               ColumnHeaderHeight="64"
+                               RowHeaderWidth="0"
+                               FrozenColumnCount="3"
+                               HeadersVisibility="Column"
+                               CanUserResizeColumns="True"
+                               CanUserReorderColumns="True"
+                               CanUserResizeRows="False">
+                        <DataGrid.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem Header="Copy" Command="Copy" />
+                                <MenuItem Header="Copy with headers" Click="CopyWithHeaders_Click" />
+                                <Separator />
+                                <MenuItem Header="Perform DNS Recon" 
+                                          Command="{Binding DataContext.RunReconFromTraceCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" 
+                                          CommandParameter="{Binding SelectedItem.Domain, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
+                            </ContextMenu>
+                        </DataGrid.ContextMenu>
+                        <DataGrid.RowDetailsTemplate>
+                            <DataTemplate>
+                                <Border Background="#242433" Padding="10" CornerRadius="8" Margin="0,6,0,6">
+                                    <ItemsControl ItemsSource="{Binding Hops}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <WrapPanel />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border CornerRadius="6"
+                                                        Margin="0,0,8,8"
+                                                        Padding="8,4"
+                                                        Background="{Binding IsTimeout, Converter={StaticResource HopStatusBrushConverter}}"
+                                                        ToolTip="{Binding HopNumber, StringFormat=Hop {0}}">
+                                                    <TextBlock Foreground="White"
+                                                               Text="{Binding IP}"/>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </Border>
+                            </DataTemplate>
+                        </DataGrid.RowDetailsTemplate>
+                    </DataGrid>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="By Hop">
+                <Grid Margin="0,10,0,0">
+                    <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                        <ItemsControl ItemsSource="{Binding HopSections}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Horizontal"/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="{DynamicResource SurfaceBrush}"
+                                            BorderBrush="{DynamicResource PrimaryBrush}"
+                                            BorderThickness="1"
+                                            CornerRadius="10"
+                                            Margin="0,0,12,0"
+                                            Padding="16"
+                                            Width="320">
+                                        <Grid>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="*"/>
+                                            </Grid.RowDefinitions>
+
+                                            <TextBlock Grid.Row="0"
+                                                       FontSize="16"
+                                                       FontWeight="Bold"
+                                                       Foreground="{DynamicResource ForegroundBrush}"
+                                                       Text="{Binding HopNumber, StringFormat=Hop {0}}"/>
+
+                                            <TextBox Grid.Row="1"
+                                                     Margin="0,10,0,10"
+                                                     Height="36"
+                                                     Text="{Binding FilterText, UpdateSourceTrigger=PropertyChanged}"
+                                                     ToolTip="Filter by domain or IP"/>
+
+                                            <DataGrid Grid.Row="2"
+                                                      ItemsSource="{Binding RowsView}"
+                                                      HeadersVisibility="Column"
+                                                      AutoGenerateColumns="False"
+                                                      CanUserSortColumns="True">
+                                                <DataGrid.Columns>
+                                                    <DataGridTextColumn Header="Domain" Binding="{Binding Domain}" Width="*"/>
+                                                    <DataGridTextColumn Header="IP" Binding="{Binding IP}" Width="140"/>
+                                                </DataGrid.Columns>
+                                            </DataGrid>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Grid>
+            </TabItem>
+        </TabControl>
+
+        <!-- Status Bar Localized to Diagnostic Probe Progress -->
+        <Grid Grid.Row="2" Margin="4,0,4,4">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <TextBlock Grid.Column="0" VerticalAlignment="Center" Margin="0,0,20,0">
+                <Run Text="Status: "/>
+                <Run Text="{Binding Status}" FontWeight="Bold" Foreground="{DynamicResource PrimaryBrush}"/>
+            </TextBlock>
+
+            <ProgressBar Grid.Column="1" Style="{StaticResource BaseProgressBar}" Value="{Binding Progress}" Maximum="100"/>
+
+            <TextBlock Grid.Column="2" VerticalAlignment="Center" Margin="20,0,20,0">
+                <Run Text="Total traced domains: "/>
+                <Run Text="{Binding SuccessfulTracesCount, Mode=OneWay}" FontWeight="Bold" Foreground="{DynamicResource PrimaryBrush}"/>
+            </TextBlock>
+
+            <TextBlock Grid.Column="3" VerticalAlignment="Center" Margin="0,0,0,0">
+                <Run Text="Progress: "/>
+                <Run Text="{Binding Progress, StringFormat={}{0:F1}%}" FontWeight="Bold" Foreground="{DynamicResource PrimaryBrush}"/>
+            </TextBlock>
+        </Grid>
+    </Grid>
+</UserControl>

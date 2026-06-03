@@ -3,16 +3,15 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.WPF;assembly=LiveChartsCore.SkiaSharpView.WPF"
              mc:Ignorable="d"
              d:DesignHeight="700" d:DesignWidth="1000">
 
-    <Grid Background="#161622" Margin="0">
+    <Grid Background="#12121C" Margin="0">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" /> <!-- Tactical Header -->
-            <RowDefinition Height="Auto" /> <!-- Metrics Cards -->
-            <RowDefinition Height="1.4*" /> <!-- Charts -->
-            <RowDefinition Height="1*" />   <!-- Live Cyber Stream -->
+            <RowDefinition Height="Auto" />  <!-- Tactical Header -->
+            <RowDefinition Height="Auto" />  <!-- Metrics Cards -->
+            <RowDefinition Height="1.4*" /> <!-- Task History & Intel -->
+            <RowDefinition Height="1*" />   <!-- Live Stream -->
         </Grid.RowDefinitions>
 
         <!-- ====================== -->
@@ -20,8 +19,12 @@
         <!-- ====================== -->
         <Grid Grid.Row="0" Margin="0,0,0,16">
             <StackPanel>
-                <TextBlock Text="Telemetry Dashboard" FontSize="20" FontWeight="Bold" Foreground="White"/>
-                <TextBlock Text="TACTICAL NETWORK RECONNAISSANCE &amp; THREAT TELEMETRY CONSOLE" FontSize="9" FontFamily="Consolas" Foreground="#6C5CE7" FontWeight="Bold" Margin="0,2,0,0"/>
+                <TextBlock Text="Telemetry Dashboard"
+                           FontSize="22" FontWeight="Bold" Foreground="#F1F1FA"/>
+                <TextBlock Text="TACTICAL NETWORK RECONNAISSANCE  ·  THREAT TELEMETRY CONSOLE"
+                           FontSize="11" FontFamily="Cascadia Code, Consolas"
+                           Foreground="#7C6FE4" FontWeight="SemiBold" Margin="0,4,0,0"
+                           TextOptions.TextFormattingMode="Display"/>
             </StackPanel>
         </Grid>
 
@@ -29,75 +32,71 @@
         <!-- METRICS CARDS ROW      -->
         <!-- ====================== -->
         <UniformGrid Grid.Row="1" Columns="4" Margin="0,0,0,16">
-            
-            <!-- Target Scanned Card -->
-            <Border BorderBrush="#34344A" BorderThickness="1" CornerRadius="10" Margin="0,0,8,0">
-                <Border.Background>
-                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                        <GradientStop Color="#1F1F30" Offset="0" />
-                        <GradientStop Color="#151522" Offset="1" />
-                    </LinearGradientBrush>
-                </Border.Background>
+
+            <!-- Total Targets -->
+            <Border Background="#1E1E2E" BorderBrush="#383850" BorderThickness="1"
+                    CornerRadius="10" Margin="0,0,8,0">
                 <Grid>
-                    <!-- Left Accent Bar -->
-                    <Border Background="#6C5CE7" Width="4" HorizontalAlignment="Left" CornerRadius="4,0,0,4"/>
-                    <StackPanel Margin="16,14,14,14">
-                        <TextBlock Text="TOTAL TARGETS SCANNED" FontSize="9" Foreground="#8A8AB0" FontWeight="Bold"/>
-                        <TextBlock Text="{Binding TotalTraced}" FontSize="28" FontWeight="Bold" Foreground="#9F8DFF" Margin="0,6,0,0"/>
+                    <Border Background="#7C6FE4" Width="4" HorizontalAlignment="Left"
+                            CornerRadius="4,0,0,4"/>
+                    <StackPanel Margin="18,14,14,14">
+                        <TextBlock Text="TOTAL SCANNED"
+                                   FontSize="11" Foreground="#B8B8D8" FontWeight="SemiBold"
+                                   TextOptions.TextFormattingMode="Display"/>
+                        <TextBlock Text="{Binding TotalTraced}"
+                                   FontSize="30" FontWeight="Bold" Foreground="#A594FF"
+                                   Margin="0,6,0,0"/>
                     </StackPanel>
                 </Grid>
             </Border>
 
-            <!-- Success Rate Card -->
-            <Border BorderBrush="#34344A" BorderThickness="1" CornerRadius="10" Margin="8,0,8,0">
-                <Border.Background>
-                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                        <GradientStop Color="#1F1F30" Offset="0" />
-                        <GradientStop Color="#151522" Offset="1" />
-                    </LinearGradientBrush>
-                </Border.Background>
+            <!-- Success Count -->
+            <Border Background="#1E1E2E" BorderBrush="#383850" BorderThickness="1"
+                    CornerRadius="10" Margin="8,0,8,0">
                 <Grid>
-                    <!-- Left Accent Bar -->
-                    <Border Background="#27AE60" Width="4" HorizontalAlignment="Left" CornerRadius="4,0,0,4"/>
-                    <StackPanel Margin="16,14,14,14">
-                        <TextBlock Text="SUCCESS RATE / ACTIVE" FontSize="9" Foreground="#8A8AB0" FontWeight="Bold"/>
-                        <TextBlock Text="{Binding SuccessCount}" FontSize="28" FontWeight="Bold" Foreground="#2ECC71" Margin="0,6,0,0"/>
+                    <Border Background="#22C55E" Width="4" HorizontalAlignment="Left"
+                            CornerRadius="4,0,0,4"/>
+                    <StackPanel Margin="18,14,14,14">
+                        <TextBlock Text="SUCCESS COUNT"
+                                   FontSize="11" Foreground="#B8B8D8" FontWeight="SemiBold"
+                                   TextOptions.TextFormattingMode="Display"/>
+                        <TextBlock Text="{Binding SuccessCount}"
+                                   FontSize="30" FontWeight="Bold" Foreground="#4ADE80"
+                                   Margin="0,6,0,0"/>
                     </StackPanel>
                 </Grid>
             </Border>
 
-            <!-- Average Hop Depth Card -->
-            <Border BorderBrush="#34344A" BorderThickness="1" CornerRadius="10" Margin="8,0,8,0">
-                <Border.Background>
-                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                        <GradientStop Color="#1F1F30" Offset="0" />
-                        <GradientStop Color="#151522" Offset="1" />
-                    </LinearGradientBrush>
-                </Border.Background>
+            <!-- Avg Hop Depth -->
+            <Border Background="#1E1E2E" BorderBrush="#383850" BorderThickness="1"
+                    CornerRadius="10" Margin="8,0,8,0">
                 <Grid>
-                    <!-- Left Accent Bar -->
-                    <Border Background="#FFB020" Width="4" HorizontalAlignment="Left" CornerRadius="4,0,0,4"/>
-                    <StackPanel Margin="16,14,14,14">
-                        <TextBlock Text="AVERAGE HOP DEPTH" FontSize="9" Foreground="#8A8AB0" FontWeight="Bold"/>
-                        <TextBlock Text="{Binding AvgHopDepth, StringFormat={}{0} Hops}" FontSize="28" FontWeight="Bold" Foreground="#F1C40F" Margin="0,6,0,0"/>
+                    <Border Background="#F59E0B" Width="4" HorizontalAlignment="Left"
+                            CornerRadius="4,0,0,4"/>
+                    <StackPanel Margin="18,14,14,14">
+                        <TextBlock Text="AVG HOP DEPTH"
+                                   FontSize="11" Foreground="#B8B8D8" FontWeight="SemiBold"
+                                   TextOptions.TextFormattingMode="Display"/>
+                        <TextBlock Text="{Binding AvgHopDepth, StringFormat={}{0} Hops}"
+                                   FontSize="30" FontWeight="Bold" Foreground="#FCD34D"
+                                   Margin="0,6,0,0"/>
                     </StackPanel>
                 </Grid>
             </Border>
 
-            <!-- Early Failures Card -->
-            <Border BorderBrush="#34344A" BorderThickness="1" CornerRadius="10" Margin="8,0,0,0">
-                <Border.Background>
-                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                        <GradientStop Color="#1F1F30" Offset="0" />
-                        <GradientStop Color="#151522" Offset="1" />
-                    </LinearGradientBrush>
-                </Border.Background>
+            <!-- Early Failures -->
+            <Border Background="#1E1E2E" BorderBrush="#383850" BorderThickness="1"
+                    CornerRadius="10" Margin="8,0,0,0">
                 <Grid>
-                    <!-- Left Accent Bar -->
-                    <Border Background="#E74C3C" Width="4" HorizontalAlignment="Left" CornerRadius="4,0,0,4"/>
-                    <StackPanel Margin="16,14,14,14">
-                        <TextBlock Text="EARLY PATH BLOCKS / FAILS" FontSize="9" Foreground="#8A8AB0" FontWeight="Bold"/>
-                        <TextBlock Text="{Binding EarlyFailures}" FontSize="28" FontWeight="Bold" Foreground="#E74C3C" Margin="0,6,0,0"/>
+                    <Border Background="#EF4444" Width="4" HorizontalAlignment="Left"
+                            CornerRadius="4,0,0,4"/>
+                    <StackPanel Margin="18,14,14,14">
+                        <TextBlock Text="PATH FAILURES"
+                                   FontSize="11" Foreground="#B8B8D8" FontWeight="SemiBold"
+                                   TextOptions.TextFormattingMode="Display"/>
+                        <TextBlock Text="{Binding EarlyFailures}"
+                                   FontSize="30" FontWeight="Bold" Foreground="#F87171"
+                                   Margin="0,6,0,0"/>
                     </StackPanel>
                 </Grid>
             </Border>
@@ -105,87 +104,118 @@
         </UniformGrid>
 
         <!-- ====================== -->
-        <!-- CHARTS SECTION         -->
+        <!-- TASK HISTORY & INTEL   -->
         <!-- ====================== -->
         <Grid Grid.Row="2" Margin="0,0,0,16">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="3.2*" /> <!-- Latency Line Chart -->
-                <ColumnDefinition Width="2*" /> <!-- DNS Record Type Distribution -->
+                <ColumnDefinition Width="3.2*" />
+                <ColumnDefinition Width="2*" />
             </Grid.ColumnDefinitions>
 
-            <!-- Network Latency Cartesian Chart -->
-            <Border Grid.Column="0" BorderBrush="#34344A" BorderThickness="1" CornerRadius="10" Padding="16" Margin="0,0,12,0">
-                <Border.Background>
-                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                        <GradientStop Color="#1F1F30" Offset="0" />
-                        <GradientStop Color="#151522" Offset="1" />
-                    </LinearGradientBrush>
-                </Border.Background>
+            <!-- Task History Table -->
+            <Border Grid.Column="0" Background="#1E1E2E" BorderBrush="#383850"
+                    BorderThickness="1" CornerRadius="10" Padding="16" Margin="0,0,12,0">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
 
-                    <TextBlock Text="{Binding LatencyChartTitle}" FontSize="13" FontFamily="Consolas" FontWeight="Bold" Foreground="White" Margin="0,0,0,12"/>
+                    <TextBlock Text="DIAGNOSTIC TASK HISTORY"
+                               FontSize="12" FontFamily="Cascadia Code, Consolas"
+                               FontWeight="Bold" Foreground="#B8B8D8" Margin="0,0,0,12"
+                               TextOptions.TextFormattingMode="Display"/>
 
-                    <lvc:CartesianChart Grid.Row="1"
-                                        Series="{Binding ActivitySeries}"
-                                        XAxes="{Binding XAxes}"
-                                        YAxes="{Binding YAxes}"
-                                        LegendPosition="Hidden" />
+                    <DataGrid Grid.Row="1" ItemsSource="{Binding CompletedTasks}"
+                              AutoGenerateColumns="False" IsReadOnly="True"
+                              Background="Transparent" RowBackground="Transparent"
+                              AlternatingRowBackground="#22223A"
+                              BorderThickness="0" HeadersVisibility="Column"
+                              Foreground="#F1F1FA" GridLinesVisibility="Horizontal"
+                              HorizontalGridLinesBrush="#2A2A3C"
+                              FontSize="13">
+                        <DataGrid.Resources>
+                            <Style TargetType="DataGridColumnHeader">
+                                <Setter Property="Background"   Value="Transparent" />
+                                <Setter Property="Foreground"   Value="#8888A8" />
+                                <Setter Property="FontWeight"   Value="SemiBold" />
+                                <Setter Property="FontSize"     Value="11" />
+                                <Setter Property="Padding"      Value="0,0,0,8" />
+                                <Setter Property="BorderThickness" Value="0" />
+                            </Style>
+                            <Style TargetType="DataGridRow">
+                                <Setter Property="Foreground" Value="#F1F1FA" />
+                            </Style>
+                        </DataGrid.Resources>
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="TARGET"      Binding="{Binding Domain}"              Width="*"   />
+                            <DataGridTextColumn Header="RESOLVED IP" Binding="{Binding ResolvedDestination}" Width="*"   />
+                            <DataGridTextColumn Header="HOPS"        Binding="{Binding HopCount}"            Width="60"  />
+                            <DataGridTextColumn Header="STATUS"      Binding="{Binding Status}"              Width="100" />
+                        </DataGrid.Columns>
+                    </DataGrid>
                 </Grid>
             </Border>
 
-            <!-- DNS Records Distribution Pie Chart -->
-            <Border Grid.Column="1" BorderBrush="#34344A" BorderThickness="1" CornerRadius="10" Padding="16">
-                <Border.Background>
-                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                        <GradientStop Color="#1F1F30" Offset="0" />
-                        <GradientStop Color="#151522" Offset="1" />
-                    </LinearGradientBrush>
-                </Border.Background>
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
-                    </Grid.RowDefinitions>
+            <!-- Key Intel Summary Card -->
+            <Border Grid.Column="1" Background="#1E1E2E" BorderBrush="#383850"
+                    BorderThickness="1" CornerRadius="10" Padding="18">
+                <StackPanel>
+                    <TextBlock Text="KEY INTEL SUMMARY"
+                               FontSize="12" FontFamily="Cascadia Code, Consolas"
+                               FontWeight="Bold" Foreground="#B8B8D8" Margin="0,0,0,18"
+                               TextOptions.TextFormattingMode="Display"/>
 
-                    <TextBlock Text="DNS RECORD RATIO DISTRIBUTION" FontSize="13" FontFamily="Consolas" FontWeight="Bold" Foreground="White" Margin="0,0,0,12"/>
+                    <StackPanel Margin="0,0,0,14">
+                        <TextBlock Text="LOCAL IP" FontSize="11" Foreground="#8888A8" FontWeight="SemiBold"/>
+                        <TextBlock Text="{Binding LocalIp}" FontSize="15" Foreground="#A594FF"
+                                   FontWeight="SemiBold" Margin="0,3,0,0"/>
+                    </StackPanel>
 
-                    <lvc:PieChart Grid.Row="1"
-                                  Series="{Binding DnsRecordSeries}"
-                                  LegendPosition="Right" />
-                </Grid>
+                    <StackPanel Margin="0,0,0,14">
+                        <TextBlock Text="DEFAULT GATEWAY" FontSize="11" Foreground="#8888A8" FontWeight="SemiBold"/>
+                        <TextBlock Text="{Binding Gateway}" FontSize="15" Foreground="#4ADE80"
+                                   FontWeight="SemiBold" Margin="0,3,0,0"/>
+                    </StackPanel>
+
+                    <StackPanel Margin="0,0,0,14">
+                        <TextBlock Text="PRIMARY DNS" FontSize="11" Foreground="#8888A8" FontWeight="SemiBold"/>
+                        <TextBlock Text="{Binding DnsServer}" FontSize="15" Foreground="#FCD34D"
+                                   FontWeight="SemiBold" Margin="0,3,0,0"/>
+                    </StackPanel>
+
+                    <StackPanel Margin="0,0,0,14">
+                        <TextBlock Text="NETWORK STATUS" FontSize="11" Foreground="#8888A8" FontWeight="SemiBold"/>
+                        <TextBlock Text="{Binding NetworkStatus}" FontSize="15" Foreground="#F1F1FA"
+                                   FontWeight="SemiBold" Margin="0,3,0,0"/>
+                    </StackPanel>
+                </StackPanel>
             </Border>
         </Grid>
 
         <!-- ======================================= -->
-        <!-- CYBER SECURITY REAL-TIME EVENT STREAM  -->
+        <!-- LIVE SECURITY INTEL RECON LOG STREAM    -->
         <!-- ======================================= -->
-        <Border Grid.Row="3" BorderBrush="#2B2B3C" BorderThickness="1" CornerRadius="10" Padding="14" Margin="0,0,0,0">
-            <Border.Background>
-                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                    <GradientStop Color="#1B1B2C" Offset="0" />
-                    <GradientStop Color="#111119" Offset="1" />
-                </LinearGradientBrush>
-            </Border.Background>
+        <Border Grid.Row="3" Background="#1A1A2A" BorderBrush="#383850"
+                BorderThickness="1" CornerRadius="10" Padding="16" Margin="0">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
-                
+
                 <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
-                    <!-- Blinking indicator -->
-                    <Ellipse x:Name="LiveIndicator" Width="8" Height="8" Fill="#FF3B30" Margin="0,0,8,0" VerticalAlignment="Center">
+                    <Ellipse Width="8" Height="8" Fill="#EF4444" Margin="0,0,8,0"
+                             VerticalAlignment="Center">
                         <Ellipse.Style>
                             <Style TargetType="Ellipse">
                                 <Style.Triggers>
                                     <EventTrigger RoutedEvent="Loaded">
                                         <BeginStoryboard>
                                             <Storyboard RepeatBehavior="Forever">
-                                                <DoubleAnimation Storyboard.TargetProperty="Opacity" From="1" To="0.2" Duration="0:0:0.8" AutoReverse="True"/>
+                                                <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                                 From="1" To="0.25"
+                                                                 Duration="0:0:0.9" AutoReverse="True"/>
                                             </Storyboard>
                                         </BeginStoryboard>
                                     </EventTrigger>
@@ -193,13 +223,19 @@
                             </Style>
                         </Ellipse.Style>
                     </Ellipse>
-                    <TextBlock Text="LIVE SECURITY INTEL RECON LOG STREAM" FontSize="10" FontFamily="Consolas" FontWeight="Bold" Foreground="#A8A8C8" VerticalAlignment="Center"/>
+                    <TextBlock Text="LIVE INTEL RECON LOG STREAM"
+                               FontSize="11" FontFamily="Cascadia Code, Consolas"
+                               FontWeight="Bold" Foreground="#B8B8D8" VerticalAlignment="Center"
+                               TextOptions.TextFormattingMode="Display"/>
                 </StackPanel>
 
                 <!-- Scrollable Console List -->
-                <Border Grid.Row="1" CornerRadius="8" Background="#0A0A10" BorderBrush="#222232" BorderThickness="1">
-                    <ScrollViewer VerticalScrollBarVisibility="Auto" Background="Transparent" Padding="12,10">
-                        <ItemsControl ItemsSource="{Binding DataContext.ActivityLog, RelativeSource={RelativeSource AncestorType=Window}}">
+                <Border Grid.Row="1" CornerRadius="6" Background="#0E0E1A"
+                        BorderBrush="#282838" BorderThickness="1">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                  Background="Transparent" Padding="12,10">
+                        <ItemsControl ItemsSource="{Binding DataContext.ActivityLog,
+                                      RelativeSource={RelativeSource AncestorType=Window}}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <Grid Margin="0,2,0,2">
@@ -207,9 +243,16 @@
                                             <ColumnDefinition Width="Auto"/>
                                             <ColumnDefinition Width="*"/>
                                         </Grid.ColumnDefinitions>
-                                        <!-- Micro terminal prompt indicator -->
-                                        <TextBlock Grid.Column="0" Text="❯" FontFamily="Consolas" FontSize="13" Foreground="#6C5CE7" Margin="0,0,8,0"/>
-                                        <TextBlock Grid.Column="1" Text="{Binding}" FontFamily="Consolas, Courier New" FontSize="13" Foreground="#3BF520" TextWrapping="Wrap"/>
+                                        <TextBlock Grid.Column="0"
+                                                   Text="❯" FontFamily="Cascadia Code, Consolas"
+                                                   FontSize="12" Foreground="#7C6FE4"
+                                                   Margin="0,0,8,0" VerticalAlignment="Top"/>
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding}"
+                                                   FontFamily="Cascadia Code, Consolas, Courier New"
+                                                   FontSize="12" Foreground="#A8E6A8"
+                                                   TextWrapping="Wrap"
+                                                   TextOptions.TextFormattingMode="Display"/>
                                     </Grid>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
@@ -219,4 +262,5 @@
             </Grid>
         </Border>
     </Grid>
+
 </UserControl>

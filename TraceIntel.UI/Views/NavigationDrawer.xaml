@@ -42,11 +42,11 @@
             </Border>
             <ControlTemplate.Triggers>
               <Trigger Property="IsMouseOver" Value="True">
-                <Setter Property="Background" Value="#1C1C28" />
-                <Setter Property="Foreground" Value="#6C5CE7" />
+                <Setter Property="Background" Value="{DynamicResource SurfaceElevatedBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}" />
               </Trigger>
               <Trigger Property="IsPressed" Value="True">
-                <Setter Property="Background" Value="#242436" />
+                <Setter Property="Background" Value="{DynamicResource BackgroundBrush}" />
               </Trigger>
             </ControlTemplate.Triggers>
           </ControlTemplate>
@@ -56,20 +56,20 @@
   </UserControl.Resources>
 
   <!-- Premium distinct dark background sidebar with elegant right dividing border -->
-  <Border Background="#11111B" BorderBrush="#232333" BorderThickness="0,0,1,0" Padding="18" VerticalAlignment="Stretch">
+  <Border Background="{DynamicResource SurfaceElevatedBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,1,0" Padding="18" VerticalAlignment="Stretch">
     <StackPanel>
       <!-- Title header with a modern glow accent -->
       <TextBlock Text="TRACE X" FontSize="26" FontWeight="Bold"
-                 Foreground="#6C5CE7" Margin="8,10,0,32"/>
+                 Foreground="{DynamicResource PrimaryBrush}" Margin="8,10,0,32"/>
       
       <!-- Interactive Highlight Navigation Buttons -->
       <Button Content="Dashboard" Tag="📊" Command="{Binding NavigateCommand}" CommandParameter="Dashboard">
         <Button.Style>
           <Style TargetType="Button" BasedOn="{StaticResource NavItemStyle}">
             <Style.Triggers>
-              <DataTrigger Binding="{Binding SelectedTabIndex}" Value="0">
-                <Setter Property="Background" Value="#1C1C2C" />
-                <Setter Property="Foreground" Value="#9F8DFF" />
+              <DataTrigger Binding="{Binding IsDashboardActive}" Value="True">
+                <Setter Property="Background" Value="{DynamicResource SurfaceElevatedBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource SecondaryBrush}" />
               </DataTrigger>
             </Style.Triggers>
           </Style>
@@ -80,13 +80,22 @@
         <Button.Style>
           <Style TargetType="Button" BasedOn="{StaticResource NavItemStyle}">
             <Style.Triggers>
-              <DataTrigger Binding="{Binding SelectedTabIndex}" Value="1">
-                <Setter Property="Background" Value="#1C1C2C" />
-                <Setter Property="Foreground" Value="#9F8DFF" />
+              <DataTrigger Binding="{Binding IsTraceActive}" Value="True">
+                <Setter Property="Background" Value="{DynamicResource SurfaceElevatedBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource SecondaryBrush}" />
               </DataTrigger>
-              <DataTrigger Binding="{Binding SelectedTabIndex}" Value="2">
-                <Setter Property="Background" Value="#1C1C2C" />
-                <Setter Property="Foreground" Value="#9F8DFF" />
+            </Style.Triggers>
+          </Style>
+        </Button.Style>
+      </Button>
+
+      <Button Content="Ping Tool" Tag="🔊" Command="{Binding NavigateCommand}" CommandParameter="Ping">
+        <Button.Style>
+          <Style TargetType="Button" BasedOn="{StaticResource NavItemStyle}">
+            <Style.Triggers>
+              <DataTrigger Binding="{Binding IsPingActive}" Value="True">
+                <Setter Property="Background" Value="{DynamicResource SurfaceElevatedBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource SecondaryBrush}" />
               </DataTrigger>
             </Style.Triggers>
           </Style>
@@ -97,9 +106,9 @@
         <Button.Style>
           <Style TargetType="Button" BasedOn="{StaticResource NavItemStyle}">
             <Style.Triggers>
-              <DataTrigger Binding="{Binding SelectedTabIndex}" Value="3">
-                <Setter Property="Background" Value="#1C1C2C" />
-                <Setter Property="Foreground" Value="#9F8DFF" />
+              <DataTrigger Binding="{Binding IsDnsReconActive}" Value="True">
+                <Setter Property="Background" Value="{DynamicResource SurfaceElevatedBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource SecondaryBrush}" />
               </DataTrigger>
             </Style.Triggers>
           </Style>
@@ -110,9 +119,9 @@
         <Button.Style>
           <Style TargetType="Button" BasedOn="{StaticResource NavItemStyle}">
             <Style.Triggers>
-              <DataTrigger Binding="{Binding SelectedTabIndex}" Value="4">
-                <Setter Property="Background" Value="#1C1C2C" />
-                <Setter Property="Foreground" Value="#9F8DFF" />
+              <DataTrigger Binding="{Binding IsSettingsActive}" Value="True">
+                <Setter Property="Background" Value="{DynamicResource SurfaceElevatedBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource SecondaryBrush}" />
               </DataTrigger>
             </Style.Triggers>
           </Style>

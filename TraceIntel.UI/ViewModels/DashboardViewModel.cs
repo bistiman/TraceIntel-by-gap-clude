@@ -1,17 +1,14 @@
 using System;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using LiveChartsCore;
-using LiveChartsCore.SkiaSharpView;
-using LiveChartsCore.SkiaSharpView.Painting;
-using SkiaSharp;
+using System.Net;
+using System.Net.NetworkInformation;
+using System.Net.Sockets;
 using TraceIntel.Core.Models;
 
 namespace TraceIntel.UI.ViewModels
 {
-    public class DashboardViewModel : INotifyPropertyChanged
+    public class DashboardViewModel : ViewModelBase
     {
         private readonly MainViewModel _mainViewModel;
 
@@ -20,95 +17,69 @@ namespace TraceIntel.UI.ViewModels
         private int _successCount;
         private int _earlyFailures;
         private double _avgHopDepth;
-        private string _latencyChartTitle = "Network Latency Profile (Selected Target)";
+
+        // Active network adapter stats
+        private string _localIp = "Detecting...";
+        private string _gateway = "Detecting...";
+        private string _dnsServer = "Detecting...";
+        private string _networkStatus = "Active";
 
         public int TotalTraced
         {
             get => _totalTraced;
-            set { _totalTraced = value; OnPropertyChanged(); }
+            set => SetProperty(ref _totalTraced, value);
         }
 
         public int SuccessCount
         {
             get => _successCount;
-            set { _successCount = value; OnPropertyChanged(); }
+            set => SetProperty(ref _successCount, value);
         }
 
         public int EarlyFailures
         {
             get => _earlyFailures;
-            set { _earlyFailures = value; OnPropertyChanged(); }
+            set => SetProperty(ref _earlyFailures, value);
         }
 
         public double AvgHopDepth
         {
             get => _avgHopDepth;
-            set { _avgHopDepth = value; OnPropertyChanged(); }
+            set => SetProperty(ref _avgHopDepth, value);
         }
 
-        public string LatencyChartTitle
+        public string LocalIp
         {
-            get => _latencyChartTitle;
-            set { _latencyChartTitle = value; OnPropertyChanged(); }
+            get => _localIp;
+            set => SetProperty(ref _localIp, value);
         }
 
-        // LiveCharts series collections
-        public ObservableCollection<ISeries> ActivitySeries { get; set; } = new();
-        public ObservableCollection<ISeries> DnsRecordSeries { get; set; } = new();
-        public Axis[] XAxes { get; set; }
-        public Axis[] YAxes { get; set; }
+        public string Gateway
+        {
+            get => _gateway;
+            set => SetProperty(ref _gateway, value);
+        }
 
-        private readonly LineSeries<double> _latencyLineSeries;
+        public string DnsServer
+        {
+            get => _dnsServer;
+            set => SetProperty(ref _dnsServer, value);
+        }
+
+        public string NetworkStatus
+        {
+            get => _networkStatus;
+            set => SetProperty(ref _networkStatus, value);
+        }
+
+        public ObservableCollection<DomainTrace> CompletedTasks => _mainViewModel.TraceVM.Results;
 
         public DashboardViewModel(MainViewModel mainViewModel)
         {
             _mainViewModel = mainViewModel;
 
-            // ======================
-            // INITIALIZE LINE CHART (LATENCY)
-            // ======================
-            _latencyLineSeries = new LineSeries<double>
-            {
-                Name = "Latency (ms)",
-                Values = new double[] { 14, 22, 19, 45, 85, 110, 95 }, // Realistic network hop profile
-                Stroke = new SolidColorPaint(SKColors.MediumPurple) { StrokeThickness = 3 },
-                Fill = new SolidColorPaint(SKColors.MediumPurple.WithAlpha(35)),
-                GeometrySize = 8,
-                GeometryStroke = new SolidColorPaint(SKColors.MediumPurple) { StrokeThickness = 2 }
-            };
-
-            ActivitySeries.Add(_latencyLineSeries);
-
-            XAxes = new Axis[]
-            {
-                new Axis
-                {
-                    Name = "Hop Number",
-                    Labels = new string[] { "Hop 1", "Hop 2", "Hop 3", "Hop 4", "Hop 5", "Hop 6", "Hop 7" },
-                    TextSize = 12,
-                    NameTextSize = 14,
-                    LabelsPaint = new SolidColorPaint(SKColors.WhiteSmoke),
-                    NamePaint = new SolidColorPaint(SKColors.WhiteSmoke)
-                }
-            };
-
-            YAxes = new Axis[]
-            {
-                new Axis
-                {
-                    Name = "Latency (ms)",
-                    MinLimit = 0,
-                    TextSize = 12,
-                    NameTextSize = 14,
-                    LabelsPaint = new SolidColorPaint(SKColors.WhiteSmoke),
-                    NamePaint = new SolidColorPaint(SKColors.WhiteSmoke)
-                }
-            };
-
-            // ======================
-            // INITIALIZE PIE CHART (DNS)
-            // ======================
-            LoadDefaultDnsPieChart();
+            // Retrieve active adapter details
+            RetrieveNetworkDetails();
 
             // Refresh statistics
             RefreshStats();
@@ -116,108 +87,49 @@ namespace TraceIntel.UI.ViewModels
 
         public void RefreshStats()
         {
-            // Calculate real traceroute statistics
-            TotalTraced = _mainViewModel.RoutingRows.Count;
-            SuccessCount = _mainViewModel.SuccessfulTracesCount;
-            EarlyFailures = _mainViewModel.RoutingRows.Count(r => r.IsEarlyFail);
+            TotalTraced = _mainViewModel.TraceVM.RoutingRows.Count;
+            SuccessCount = _mainViewModel.TraceVM.SuccessfulTracesCount;
+            EarlyFailures = _mainViewModel.TraceVM.RoutingRows.Count(r => r.IsEarlyFail);
 
-            double sumHops = _mainViewModel.RoutingRows.Sum(r => r.MaxObservedHop);
+            double sumHops = _mainViewModel.TraceVM.RoutingRows.Sum(r => r.MaxObservedHop);
             AvgHopDepth = TotalTraced > 0 ? Math.Round(sumHops / TotalTraced, 1) : 0;
 
-            // Update Latency Chart based on the last row traced (if any)
-            var lastRow = _mainViewModel.RoutingRows.LastOrDefault();
-            if (lastRow != null)
-            {
-                UpdateLatencyChart(lastRow);
-            }
-
-            // Update DNS Pie Chart based on real records (if scanned)
-            if (_mainViewModel.DnsRecords.Any())
-            {
-                UpdateDnsPieChart();
-            }
-            else
-            {
-                LoadDefaultDnsPieChart();
-            }
+            OnPropertyChanged(nameof(CompletedTasks));
         }
 
-        public void UpdateLatencyChart(RoutingRow row)
+        private void RetrieveNetworkDetails()
         {
-            if (row == null) return;
-
-            LatencyChartTitle = $"Network Latency Profile for: {row.Domain}";
-
-            var validHops = row.Hops.Where(h => h.HopNumber <= row.MaxObservedHop).ToList();
-            if (!validHops.Any()) return;
-
-            // Extract latencies, treating timeouts/nulls as 0
-            var latencies = validHops.Select(h => h.LatencyMs.HasValue ? (double)h.LatencyMs.Value : 0.0).ToArray();
-            var labels = validHops.Select(h => $"Hop {h.HopNumber}").ToArray();
-
-            _latencyLineSeries.Values = latencies;
-            XAxes[0].Labels = labels;
-        }
-
-        private void UpdateDnsPieChart()
-        {
-            DnsRecordSeries.Clear();
-
-            var groups = _mainViewModel.DnsRecords
-                .GroupBy(r => r.RecordType)
-                .Select(g => new { Type = g.Key, Count = g.Count() })
-                .OrderByDescending(g => g.Count);
-
-            var colors = new[] { SKColors.OrangeRed, SKColors.MediumSeaGreen, SKColors.DodgerBlue, SKColors.Goldenrod, SKColors.MediumPurple, SKColors.DeepPink, SKColors.Aquamarine };
-            int i = 0;
-
-            foreach (var group in groups)
+            try
             {
-                var color = colors[i % colors.Length];
-                DnsRecordSeries.Add(new PieSeries<double>
-                {
-                    Values = new double[] { group.Count },
-                    Name = group.Type,
-                    Fill = new SolidColorPaint(color),
-                    DataLabelsPaint = new SolidColorPaint(SKColors.White),
-                    DataLabelsSize = 12,
-                    DataLabelsPosition = LiveChartsCore.Measure.PolarLabelsPosition.Middle
-                });
-                i++;
+                // Local IPv4 address query
+                var host = Dns.GetHostEntry(Dns.GetHostName());
+                var ip = host.AddressList.FirstOrDefault(a => a.AddressFamily == AddressFamily.InterNetwork);
+                LocalIp = ip?.ToString() ?? "Loopback (127.0.0.1)";
+
+                // Default Gateway query
+                var gatewayAddress = NetworkInterface.GetAllNetworkInterfaces()
+                    .Where(n => n.OperationalStatus == OperationalStatus.Up && n.NetworkInterfaceType != NetworkInterfaceType.Loopback)
+                    .SelectMany(n => n.GetIPProperties().GatewayAddresses)
+                    .Select(g => g.Address)
+                    .FirstOrDefault();
+                Gateway = gatewayAddress?.ToString() ?? "Not Assigned";
+
+                // DNS Resolver query
+                var dnsServer = NetworkInterface.GetAllNetworkInterfaces()
+                    .Where(n => n.OperationalStatus == OperationalStatus.Up && n.NetworkInterfaceType != NetworkInterfaceType.Loopback)
+                    .SelectMany(n => n.GetIPProperties().DnsAddresses)
+                    .FirstOrDefault();
+                DnsServer = dnsServer?.ToString() ?? "System Default";
+
+                NetworkStatus = NetworkInterface.GetIsNetworkAvailable() ? "Active (Online)" : "Offline";
+            }
+            catch
+            {
+                LocalIp = "127.0.0.1";
+                Gateway = "192.168.1.1";
+                DnsServer = "8.8.8.8";
+                NetworkStatus = "Offline / Simulation";
             }
         }
-
-        private void LoadDefaultDnsPieChart()
-        {
-            DnsRecordSeries.Clear();
-            DnsRecordSeries.Add(new PieSeries<double>
-            {
-                Values = new double[] { 40 },
-                Name = "A (Default)",
-                Fill = new SolidColorPaint(SKColors.MediumPurple)
-            });
-            DnsRecordSeries.Add(new PieSeries<double>
-            {
-                Values = new double[] { 25 },
-                Name = "AAAA (Default)",
-                Fill = new SolidColorPaint(SKColors.DodgerBlue)
-            });
-            DnsRecordSeries.Add(new PieSeries<double>
-            {
-                Values = new double[] { 20 },
-                Name = "CNAME (Default)",
-                Fill = new SolidColorPaint(SKColors.MediumSpringGreen)
-            });
-            DnsRecordSeries.Add(new PieSeries<double>
-            {
-                Values = new double[] { 15 },
-                Name = "MX (Default)",
-                Fill = new SolidColorPaint(SKColors.Orange)
-            });
-        }
-
-        public event PropertyChangedEventHandler? PropertyChanged;
-        private void OnPropertyChanged([CallerMemberName] string? name = null)
-            => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
     }
 }
