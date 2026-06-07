@@ -27,6 +27,8 @@ namespace TraceIntel.UI.ViewModels
 
         private CancellationTokenSource? _dnsReconCts;
         private CancellationTokenSource? _whoisCts;
+        private CancellationTokenSource? _nslookupCts;
+        private string _selectedExportFormat = "CSV";
 
         private string _dnsReconTarget = string.Empty;
         private string _dnsReconStatus = "Ready";
@@ -64,7 +66,18 @@ namespace TraceIntel.UI.ViewModels
 
         public ObservableCollection<DnsRecord> DnsRecords { get; } = new();
         public ICollectionView DnsRecordsView { get; }
-        public ObservableCollection<string> NslookupRecordTypes { get; } = new() { "A", "AAAA", "MX", "NS", "CNAME", "TXT", "SOA", "SRV", "CAA", "ANY" };
+        public ObservableCollection<string> ExportFormats { get; } = new() { "CSV", "JSON", "TXT" };
+        public ObservableCollection<string> NslookupRecordTypes { get; } = new() { "A", "AAAA", "MX", "NS", "CNAME", "TXT", "SOA", "SRV", "CAA" };
+
+        public int DnsRecordCount => DnsRecords.Count;
+        public bool HasDnsRecords => DnsRecords.Count > 0;
+        public bool IsScanOptionsReadOnly => DnsScanMode != "Custom";
+
+        public string SelectedExportFormat
+        {
+            get => _selectedExportFormat;
+            set => SetProperty(ref _selectedExportFormat, value);
+        }
 
         public string DnsReconTarget
         {
@@ -128,6 +141,7 @@ namespace TraceIntel.UI.ViewModels
                 if (SetProperty(ref _dnsScanMode, value))
                 {
                     ApplyDnsScanMode();
+                    OnPropertyChanged(nameof(IsScanOptionsReadOnly));
                 }
             }
         }
@@ -150,6 +164,7 @@ namespace TraceIntel.UI.ViewModels
         public ICommand StartWhoisCommand { get; }
         public ICommand StopWhoisCommand { get; }
         public ICommand RunNslookupCommand { get; }
+        public ICommand StopNslookupCommand { get; }
         public ICommand CopyWhoisCommand { get; }
         public ICommand CopyNslookupCommand { get; }
         public ICommand CopyDnsRecordValueCommand { get; }
@@ -163,6 +178,18 @@ namespace TraceIntel.UI.ViewModels
 
             DnsRecordsView = CollectionViewSource.GetDefaultView(DnsRecords);
             DnsRecordsView.Filter = DnsRecordFilter;
+            DnsRecordsView.GroupDescriptions.Add(new PropertyGroupDescription(nameof(DnsRecord.RecordType)));
+
+            DnsRecords.CollectionChanged += (_, _) =>
+            {
+                OnPropertyChanged(nameof(DnsRecordCount));
+                OnPropertyChanged(nameof(HasDnsRecords));
+            };
+
+            if (!string.IsNullOrWhiteSpace(_settingsViewModel.SettingsDefaultDnsServer))
+            {
+                DnsCustomServer = _settingsViewModel.SettingsDefaultDnsServer;
+            }
 
             StartDnsReconCommand = new RelayCommand(async _ => await StartDnsRecon(), _ => !IsDnsReconRunning);
             StopDnsReconCommand = new RelayCommand(_ => StopDnsRecon(), _ => IsDnsReconRunning);
@@ -171,6 +198,7 @@ namespace TraceIntel.UI.ViewModels
             StartWhoisCommand = new RelayCommand(async _ => await StartWhois(), _ => !IsWhoisRunning);
             StopWhoisCommand = new RelayCommand(_ => StopWhois(), _ => IsWhoisRunning);
             RunNslookupCommand = new RelayCommand(async _ => await RunNslookup(), _ => !IsNslookupRunning);
+            StopNslookupCommand = new RelayCommand(_ => StopNslookup(), _ => IsNslookupRunning);
 
             CopyWhoisCommand = new RelayCommand(_ => CopyToClipboard(WhoisResultText, "WHOIS"), _ => !string.IsNullOrWhiteSpace(WhoisResultText));
             CopyNslookupCommand = new RelayCommand(_ => CopyToClipboard(NslookupResultText, "NSLOOKUP"), _ => !string.IsNullOrWhiteSpace(NslookupResultText));
@@ -202,53 +230,74 @@ namespace TraceIntel.UI.ViewModels
                 return;
             }
 
+            var selectedTypes = BuildSelectedRecordTypes();
+            if (DnsScanMode == "Custom" && selectedTypes.Count == 0 && !DnsBruteForce)
+            {
+                MessageBox.Show("Select at least one record type or enable subdomain brute force.", "DNS Scan", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            var resolver = ResolveDnsServer();
+            if (!string.IsNullOrWhiteSpace(resolver) && !IsResolvableDnsServer(resolver))
+            {
+                MessageBox.Show("Custom DNS resolver could not be resolved. Use an IP address or a valid hostname.", "DNS Resolver", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
             _dnsReconCts = new CancellationTokenSource();
             IsDnsReconRunning = true;
-            DnsReconStatus = "Scanning...";
-            DnsRecords.Clear();
-            SelectedDnsRecord = null;
+            DnsReconStatus = "Initializing scan...";
+            await Application.Current.Dispatcher.InvokeAsync(() =>
+            {
+                DnsRecords.Clear();
+                SelectedDnsRecord = null;
+            });
 
             try
             {
-                _logAction($"Initiating DNS reconnaissance scan on target {host} (Mode: {DnsScanMode})...");
-                var selectedTypes = new List<string>();
-                if (DnsQueryA) selectedTypes.Add("A");
-                if (DnsQueryAAAA) selectedTypes.Add("AAAA");
-                if (DnsQueryMX) selectedTypes.Add("MX");
-                if (DnsQueryNS) selectedTypes.Add("NS");
-                if (DnsQueryCNAME) selectedTypes.Add("CNAME");
-                if (DnsQueryTXT) selectedTypes.Add("TXT");
-                if (DnsQuerySOA) selectedTypes.Add("SOA");
-                if (DnsQuerySRV) selectedTypes.Add("SRV");
-                if (DnsQueryCAA) selectedTypes.Add("CAA");
-                if (DnsQueryAXFR) selectedTypes.Add("AXFR");
+                _logAction($"Initiating DNS reconnaissance on {host} (Mode: {DnsScanMode})...");
+                DnsReconStatus = "Querying DNS records...";
 
+                var timeoutMs = Math.Clamp(_settingsViewModel.SettingsTimeoutMs, 500, 10000);
                 var records = await _dnsReconService.PerformAdvancedDnsReconAsync(
                     host,
                     selectedTypes,
-                    DnsCustomServer,
+                    resolver,
                     DnsBruteForce,
+                    timeoutMs,
                     _dnsReconCts.Token);
 
                 if (_dnsReconCts.Token.IsCancellationRequested)
                 {
                     DnsReconStatus = "Stopped";
-                    _logAction($"DNS scan on target {host} was cancelled.");
+                    _logAction($"DNS scan on {host} was cancelled.");
                 }
                 else
                 {
-                    DnsRecords.Clear();
-                    foreach (var record in records)
+                    await Application.Current.Dispatcher.InvokeAsync(() =>
                     {
-                        DnsRecords.Add(record);
-                    }
-                    DnsReconStatus = $"Scan completed. Found {DnsRecords.Count} records.";
-                    _logAction($"DNS scan complete for {host}. Discovered {DnsRecords.Count} records.");
+                        DnsRecords.Clear();
+                        foreach (var record in records)
+                        {
+                            DnsRecords.Add(record);
+                        }
+                    });
+
+                    var actionable = records.Count(r => !IsStatusOnlyRecord(r));
+                    DnsReconStatus = actionable > 0
+                        ? $"Complete — {actionable} record(s) across {records.Select(r => r.RecordType).Distinct().Count()} type(s)."
+                        : "Complete — no DNS answers returned.";
+                    _logAction($"DNS scan complete for {host}. {DnsRecords.Count} row(s) in results.");
                 }
+            }
+            catch (OperationCanceledException)
+            {
+                DnsReconStatus = "Stopped";
             }
             catch (Exception ex)
             {
                 DnsReconStatus = $"Error: {ex.Message}";
+                _logAction($"DNS scan failed for {host}: {ex.Message}");
             }
             finally
             {
@@ -257,6 +306,56 @@ namespace TraceIntel.UI.ViewModels
                 _dnsReconCts = null;
                 OnDnsScanCompleted?.Invoke();
             }
+        }
+
+        private List<string> BuildSelectedRecordTypes()
+        {
+            var selectedTypes = new List<string>();
+            if (DnsQueryA) selectedTypes.Add("A");
+            if (DnsQueryAAAA) selectedTypes.Add("AAAA");
+            if (DnsQueryMX) selectedTypes.Add("MX");
+            if (DnsQueryNS) selectedTypes.Add("NS");
+            if (DnsQueryCNAME) selectedTypes.Add("CNAME");
+            if (DnsQueryTXT) selectedTypes.Add("TXT");
+            if (DnsQuerySOA) selectedTypes.Add("SOA");
+            if (DnsQuerySRV) selectedTypes.Add("SRV");
+            if (DnsQueryCAA) selectedTypes.Add("CAA");
+            if (DnsQueryAXFR) selectedTypes.Add("AXFR");
+            return selectedTypes;
+        }
+
+        private string? ResolveDnsServer()
+        {
+            if (!string.IsNullOrWhiteSpace(DnsCustomServer))
+            {
+                return DnsCustomServer.Trim();
+            }
+
+            return string.IsNullOrWhiteSpace(_settingsViewModel.SettingsDefaultDnsServer)
+                ? null
+                : _settingsViewModel.SettingsDefaultDnsServer.Trim();
+        }
+
+        private static bool IsResolvableDnsServer(string resolver)
+        {
+            if (IPAddress.TryParse(resolver, out _))
+            {
+                return true;
+            }
+
+            try
+            {
+                return Dns.GetHostAddresses(resolver).Length > 0;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private static bool IsStatusOnlyRecord(DnsRecord record)
+        {
+            return record.Value is "No records" or "Query failed" or "No response" or "Query error";
         }
 
         private void StopDnsRecon()
@@ -314,6 +413,12 @@ namespace TraceIntel.UI.ViewModels
             WhoisStatus = "Stopping...";
         }
 
+        private void StopNslookup()
+        {
+            _nslookupCts?.Cancel();
+            NslookupStatus = "Stopping...";
+        }
+
         private async Task RunNslookup()
         {
             var host = TraceViewModel.TryNormalizeHost(NslookupTarget);
@@ -323,29 +428,25 @@ namespace TraceIntel.UI.ViewModels
                 return;
             }
 
+            _nslookupCts = new CancellationTokenSource();
             IsNslookupRunning = true;
             NslookupStatus = "Resolving...";
             NslookupResultText = string.Empty;
 
             try
             {
-                var recordType = NslookupRecordType;
-                if (string.IsNullOrWhiteSpace(recordType))
+                var recordType = string.IsNullOrWhiteSpace(NslookupRecordType) ? "A" : NslookupRecordType;
+                if (!Enum.TryParse<QueryType>(recordType, true, out var queryType))
                 {
-                    recordType = "A";
+                    NslookupResultText = $"Unsupported record type: {recordType}";
+                    NslookupStatus = "Error.";
+                    return;
                 }
-                var queryType = (QueryType)Enum.Parse(typeof(QueryType), recordType);
-                _logAction($"Initiating NSLOOKUP query on target {host} (Type: {queryType})...");
-                
-                LookupClient client;
-                if (!string.IsNullOrWhiteSpace(NslookupServer) && IPAddress.TryParse(NslookupServer.Trim(), out var ip))
-                {
-                    client = new LookupClient(new LookupClientOptions(new[] { ip }) { Timeout = TimeSpan.FromSeconds(5) });
-                }
-                else
-                {
-                    client = new LookupClient(new LookupClientOptions { Timeout = TimeSpan.FromSeconds(5) });
-                }
+
+                _logAction($"Initiating NSLOOKUP on {host} (Type: {queryType})...");
+
+                var timeoutMs = Math.Clamp(_settingsViewModel.SettingsTimeoutMs, 500, 10000);
+                var client = await _dnsReconService.CreateLookupClientAsync(NslookupServer, timeoutMs, _nslookupCts.Token);
 
                 var sb = new StringBuilder();
                 var nsServerList = client.NameServers != null 
@@ -355,7 +456,7 @@ namespace TraceIntel.UI.ViewModels
                 sb.AppendLine($";; Got answer for query: {host} {queryType}");
                 sb.AppendLine();
 
-                var response = await client.QueryAsync(host, queryType);
+                var response = await client.QueryAsync(host, queryType, cancellationToken: _nslookupCts.Token);
                 
                 if (response == null)
                 {
@@ -431,7 +532,12 @@ namespace TraceIntel.UI.ViewModels
                 }
 
                 NslookupResultText = sb.ToString();
-                NslookupStatus = "Completed.";
+                NslookupStatus = _nslookupCts.Token.IsCancellationRequested ? "Stopped." : "Completed.";
+            }
+            catch (OperationCanceledException)
+            {
+                NslookupStatus = "Stopped.";
+                _logAction($"NSLOOKUP query for {host} was cancelled.");
             }
             catch (Exception ex)
             {
@@ -442,6 +548,8 @@ namespace TraceIntel.UI.ViewModels
             finally
             {
                 IsNslookupRunning = false;
+                _nslookupCts?.Dispose();
+                _nslookupCts = null;
             }
         }
 
@@ -455,7 +563,7 @@ namespace TraceIntel.UI.ViewModels
                     return;
                 }
 
-                var format = (SelectedExportFormat() ?? "CSV").Trim().ToUpperInvariant();
+                var format = (SelectedExportFormat ?? "CSV").Trim().ToUpperInvariant();
                 var ext = format switch
                 {
                     "JSON" => "json",
@@ -487,12 +595,6 @@ namespace TraceIntel.UI.ViewModels
             {
                 MessageBox.Show($"Export failed: {ex.Message}", "Export Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-        }
-
-        private string SelectedExportFormat()
-        {
-            // Simple default since DNS scanning exports use standard CSV/JSON/TXT formats
-            return "CSV";
         }
 
         private static string EscapeCsv(string? value)

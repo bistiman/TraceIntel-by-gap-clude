@@ -6,198 +6,115 @@
              mc:Ignorable="d"
              d:DesignHeight="700" d:DesignWidth="1000">
 
-    <Grid Background="#12121C" Margin="0">
+    <Grid Background="{DynamicResource BackgroundBrush}">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />  <!-- Tactical Header -->
-            <RowDefinition Height="Auto" />  <!-- Metrics Cards -->
-            <RowDefinition Height="1.4*" /> <!-- Task History & Intel -->
-            <RowDefinition Height="1*" />   <!-- Live Stream -->
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="1.4*"/>
+            <RowDefinition Height="1*"/>
         </Grid.RowDefinitions>
 
-        <!-- ====================== -->
-        <!-- TACTICAL TITLE HEADER  -->
-        <!-- ====================== -->
-        <Grid Grid.Row="0" Margin="0,0,0,16">
-            <StackPanel>
-                <TextBlock Text="Telemetry Dashboard"
-                           FontSize="22" FontWeight="Bold" Foreground="#F1F1FA"/>
-                <TextBlock Text="TACTICAL NETWORK RECONNAISSANCE  ·  THREAT TELEMETRY CONSOLE"
-                           FontSize="11" FontFamily="Cascadia Code, Consolas"
-                           Foreground="#7C6FE4" FontWeight="SemiBold" Margin="0,4,0,0"
-                           TextOptions.TextFormattingMode="Display"/>
-            </StackPanel>
-        </Grid>
-
-        <!-- ====================== -->
-        <!-- METRICS CARDS ROW      -->
-        <!-- ====================== -->
-        <UniformGrid Grid.Row="1" Columns="4" Margin="0,0,0,16">
-
-            <!-- Total Targets -->
-            <Border Background="#1E1E2E" BorderBrush="#383850" BorderThickness="1"
-                    CornerRadius="10" Margin="0,0,8,0">
+        <!-- Metrics -->
+        <UniformGrid Grid.Row="0" Columns="4" Margin="0,0,0,16">
+            <Border Style="{StaticResource MetricCard}">
                 <Grid>
-                    <Border Background="#7C6FE4" Width="4" HorizontalAlignment="Left"
-                            CornerRadius="4,0,0,4"/>
+                    <Border Background="{DynamicResource PrimaryBrush}" Width="4" HorizontalAlignment="Left" CornerRadius="4,0,0,4"/>
                     <StackPanel Margin="18,14,14,14">
-                        <TextBlock Text="TOTAL SCANNED"
-                                   FontSize="11" Foreground="#B8B8D8" FontWeight="SemiBold"
-                                   TextOptions.TextFormattingMode="Display"/>
-                        <TextBlock Text="{Binding TotalTraced}"
-                                   FontSize="30" FontWeight="Bold" Foreground="#A594FF"
-                                   Margin="0,6,0,0"/>
+                        <TextBlock Text="TOTAL SCANNED" FontSize="11" Foreground="{DynamicResource SecondaryForegroundBrush}" FontWeight="SemiBold"/>
+                        <TextBlock Text="{Binding TotalTraced}" FontSize="28" FontWeight="Bold" Foreground="{DynamicResource SecondaryBrush}" Margin="0,6,0,0"/>
                     </StackPanel>
                 </Grid>
             </Border>
 
-            <!-- Success Count -->
-            <Border Background="#1E1E2E" BorderBrush="#383850" BorderThickness="1"
-                    CornerRadius="10" Margin="8,0,8,0">
+            <Border Style="{StaticResource MetricCard}">
                 <Grid>
-                    <Border Background="#22C55E" Width="4" HorizontalAlignment="Left"
-                            CornerRadius="4,0,0,4"/>
+                    <Border Background="{DynamicResource SuccessBrush}" Width="4" HorizontalAlignment="Left" CornerRadius="4,0,0,4"/>
                     <StackPanel Margin="18,14,14,14">
-                        <TextBlock Text="SUCCESS COUNT"
-                                   FontSize="11" Foreground="#B8B8D8" FontWeight="SemiBold"
-                                   TextOptions.TextFormattingMode="Display"/>
-                        <TextBlock Text="{Binding SuccessCount}"
-                                   FontSize="30" FontWeight="Bold" Foreground="#4ADE80"
-                                   Margin="0,6,0,0"/>
+                        <TextBlock Text="SUCCESS COUNT" FontSize="11" Foreground="{DynamicResource SecondaryForegroundBrush}" FontWeight="SemiBold"/>
+                        <TextBlock Text="{Binding SuccessCount}" FontSize="28" FontWeight="Bold" Foreground="{DynamicResource SuccessBrush}" Margin="0,6,0,0"/>
                     </StackPanel>
                 </Grid>
             </Border>
 
-            <!-- Avg Hop Depth -->
-            <Border Background="#1E1E2E" BorderBrush="#383850" BorderThickness="1"
-                    CornerRadius="10" Margin="8,0,8,0">
+            <Border Style="{StaticResource MetricCard}">
                 <Grid>
-                    <Border Background="#F59E0B" Width="4" HorizontalAlignment="Left"
-                            CornerRadius="4,0,0,4"/>
+                    <Border Background="{DynamicResource WarningBrush}" Width="4" HorizontalAlignment="Left" CornerRadius="4,0,0,4"/>
                     <StackPanel Margin="18,14,14,14">
-                        <TextBlock Text="AVG HOP DEPTH"
-                                   FontSize="11" Foreground="#B8B8D8" FontWeight="SemiBold"
-                                   TextOptions.TextFormattingMode="Display"/>
-                        <TextBlock Text="{Binding AvgHopDepth, StringFormat={}{0} Hops}"
-                                   FontSize="30" FontWeight="Bold" Foreground="#FCD34D"
-                                   Margin="0,6,0,0"/>
+                        <TextBlock Text="AVG HOP DEPTH" FontSize="11" Foreground="{DynamicResource SecondaryForegroundBrush}" FontWeight="SemiBold"/>
+                        <TextBlock Text="{Binding AvgHopDepth, StringFormat={}{0} hops}" FontSize="28" FontWeight="Bold" Foreground="{DynamicResource WarningBrush}" Margin="0,6,0,0"/>
                     </StackPanel>
                 </Grid>
             </Border>
 
-            <!-- Early Failures -->
-            <Border Background="#1E1E2E" BorderBrush="#383850" BorderThickness="1"
-                    CornerRadius="10" Margin="8,0,0,0">
+            <Border Style="{StaticResource MetricCard}" Margin="0">
                 <Grid>
-                    <Border Background="#EF4444" Width="4" HorizontalAlignment="Left"
-                            CornerRadius="4,0,0,4"/>
+                    <Border Background="{DynamicResource ErrorBrush}" Width="4" HorizontalAlignment="Left" CornerRadius="4,0,0,4"/>
                     <StackPanel Margin="18,14,14,14">
-                        <TextBlock Text="PATH FAILURES"
-                                   FontSize="11" Foreground="#B8B8D8" FontWeight="SemiBold"
-                                   TextOptions.TextFormattingMode="Display"/>
-                        <TextBlock Text="{Binding EarlyFailures}"
-                                   FontSize="30" FontWeight="Bold" Foreground="#F87171"
-                                   Margin="0,6,0,0"/>
+                        <TextBlock Text="PATH FAILURES" FontSize="11" Foreground="{DynamicResource SecondaryForegroundBrush}" FontWeight="SemiBold"/>
+                        <TextBlock Text="{Binding EarlyFailures}" FontSize="28" FontWeight="Bold" Foreground="{DynamicResource ErrorBrush}" Margin="0,6,0,0"/>
                     </StackPanel>
                 </Grid>
             </Border>
-
         </UniformGrid>
 
-        <!-- ====================== -->
-        <!-- TASK HISTORY & INTEL   -->
-        <!-- ====================== -->
-        <Grid Grid.Row="2" Margin="0,0,0,16">
+        <!-- History + Intel -->
+        <Grid Grid.Row="1" Margin="0,0,0,16">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="3.2*" />
-                <ColumnDefinition Width="2*" />
+                <ColumnDefinition Width="3.2*"/>
+                <ColumnDefinition Width="2*"/>
             </Grid.ColumnDefinitions>
 
-            <!-- Task History Table -->
-            <Border Grid.Column="0" Background="#1E1E2E" BorderBrush="#383850"
-                    BorderThickness="1" CornerRadius="10" Padding="16" Margin="0,0,12,0">
+            <Border Grid.Column="0" Style="{StaticResource CardBorder}" Margin="0,0,12,0">
                 <Grid>
                     <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-
-                    <TextBlock Text="DIAGNOSTIC TASK HISTORY"
-                               FontSize="12" FontFamily="Cascadia Code, Consolas"
-                               FontWeight="Bold" Foreground="#B8B8D8" Margin="0,0,0,12"
-                               TextOptions.TextFormattingMode="Display"/>
-
-                    <DataGrid Grid.Row="1" ItemsSource="{Binding CompletedTasks}"
-                              AutoGenerateColumns="False" IsReadOnly="True"
-                              Background="Transparent" RowBackground="Transparent"
-                              AlternatingRowBackground="#22223A"
-                              BorderThickness="0" HeadersVisibility="Column"
-                              Foreground="#F1F1FA" GridLinesVisibility="Horizontal"
-                              HorizontalGridLinesBrush="#2A2A3C"
-                              FontSize="13">
-                        <DataGrid.Resources>
-                            <Style TargetType="DataGridColumnHeader">
-                                <Setter Property="Background"   Value="Transparent" />
-                                <Setter Property="Foreground"   Value="#8888A8" />
-                                <Setter Property="FontWeight"   Value="SemiBold" />
-                                <Setter Property="FontSize"     Value="11" />
-                                <Setter Property="Padding"      Value="0,0,0,8" />
-                                <Setter Property="BorderThickness" Value="0" />
-                            </Style>
-                            <Style TargetType="DataGridRow">
-                                <Setter Property="Foreground" Value="#F1F1FA" />
-                            </Style>
-                        </DataGrid.Resources>
+                    <TextBlock Text="Diagnostic task history"
+                               Style="{StaticResource SectionLabel}"
+                               Margin="0,0,0,12"/>
+                    <DataGrid Grid.Row="1"
+                              ItemsSource="{Binding CompletedTasks}"
+                              Style="{StaticResource BaseDataGrid}"
+                              AutoGenerateColumns="False"
+                              IsReadOnly="True"
+                              BorderThickness="0"
+                              GridLinesVisibility="Horizontal"
+                              HorizontalGridLinesBrush="{DynamicResource BorderBrush}">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="TARGET"      Binding="{Binding Domain}"              Width="*"   />
-                            <DataGridTextColumn Header="RESOLVED IP" Binding="{Binding ResolvedDestination}" Width="*"   />
-                            <DataGridTextColumn Header="HOPS"        Binding="{Binding HopCount}"            Width="60"  />
-                            <DataGridTextColumn Header="STATUS"      Binding="{Binding Status}"              Width="100" />
+                            <DataGridTextColumn Header="Target" Binding="{Binding Domain}" Width="*"/>
+                            <DataGridTextColumn Header="Resolved IP" Binding="{Binding ResolvedDestination}" Width="*"/>
+                            <DataGridTextColumn Header="Hops" Binding="{Binding HopCount}" Width="60"/>
+                            <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="100"/>
                         </DataGrid.Columns>
                     </DataGrid>
                 </Grid>
             </Border>
 
-            <!-- Key Intel Summary Card -->
-            <Border Grid.Column="1" Background="#1E1E2E" BorderBrush="#383850"
-                    BorderThickness="1" CornerRadius="10" Padding="18">
+            <Border Grid.Column="1" Style="{StaticResource CardBorder}">
                 <StackPanel>
-                    <TextBlock Text="KEY INTEL SUMMARY"
-                               FontSize="12" FontFamily="Cascadia Code, Consolas"
-                               FontWeight="Bold" Foreground="#B8B8D8" Margin="0,0,0,18"
-                               TextOptions.TextFormattingMode="Display"/>
-
+                    <TextBlock Text="Network intel" Style="{StaticResource SectionLabel}" Margin="0,0,0,16"/>
                     <StackPanel Margin="0,0,0,14">
-                        <TextBlock Text="LOCAL IP" FontSize="11" Foreground="#8888A8" FontWeight="SemiBold"/>
-                        <TextBlock Text="{Binding LocalIp}" FontSize="15" Foreground="#A594FF"
-                                   FontWeight="SemiBold" Margin="0,3,0,0"/>
+                        <TextBlock Text="Local IP" FontSize="11" Foreground="{DynamicResource MutedForegroundBrush}"/>
+                        <TextBlock Text="{Binding LocalIp}" FontSize="15" FontWeight="SemiBold" Foreground="{DynamicResource SecondaryBrush}" Margin="0,4,0,0"/>
                     </StackPanel>
-
                     <StackPanel Margin="0,0,0,14">
-                        <TextBlock Text="DEFAULT GATEWAY" FontSize="11" Foreground="#8888A8" FontWeight="SemiBold"/>
-                        <TextBlock Text="{Binding Gateway}" FontSize="15" Foreground="#4ADE80"
-                                   FontWeight="SemiBold" Margin="0,3,0,0"/>
+                        <TextBlock Text="Default gateway" FontSize="11" Foreground="{DynamicResource MutedForegroundBrush}"/>
+                        <TextBlock Text="{Binding Gateway}" FontSize="15" FontWeight="SemiBold" Foreground="{DynamicResource SuccessBrush}" Margin="0,4,0,0"/>
                     </StackPanel>
-
                     <StackPanel Margin="0,0,0,14">
-                        <TextBlock Text="PRIMARY DNS" FontSize="11" Foreground="#8888A8" FontWeight="SemiBold"/>
-                        <TextBlock Text="{Binding DnsServer}" FontSize="15" Foreground="#FCD34D"
-                                   FontWeight="SemiBold" Margin="0,3,0,0"/>
+                        <TextBlock Text="Primary DNS" FontSize="11" Foreground="{DynamicResource MutedForegroundBrush}"/>
+                        <TextBlock Text="{Binding DnsServer}" FontSize="15" FontWeight="SemiBold" Foreground="{DynamicResource WarningBrush}" Margin="0,4,0,0"/>
                     </StackPanel>
-
-                    <StackPanel Margin="0,0,0,14">
-                        <TextBlock Text="NETWORK STATUS" FontSize="11" Foreground="#8888A8" FontWeight="SemiBold"/>
-                        <TextBlock Text="{Binding NetworkStatus}" FontSize="15" Foreground="#F1F1FA"
-                                   FontWeight="SemiBold" Margin="0,3,0,0"/>
+                    <StackPanel>
+                        <TextBlock Text="Network status" FontSize="11" Foreground="{DynamicResource MutedForegroundBrush}"/>
+                        <TextBlock Text="{Binding NetworkStatus}" FontSize="15" FontWeight="SemiBold" Margin="0,4,0,0"/>
                     </StackPanel>
                 </StackPanel>
             </Border>
         </Grid>
 
-        <!-- ======================================= -->
-        <!-- LIVE SECURITY INTEL RECON LOG STREAM    -->
-        <!-- ======================================= -->
-        <Border Grid.Row="3" Background="#1A1A2A" BorderBrush="#383850"
-                BorderThickness="1" CornerRadius="10" Padding="16" Margin="0">
+        <!-- Activity log -->
+        <Border Grid.Row="2" Style="{StaticResource CardBorder}" Padding="16">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -205,17 +122,14 @@
                 </Grid.RowDefinitions>
 
                 <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
-                    <Ellipse Width="8" Height="8" Fill="#EF4444" Margin="0,0,8,0"
-                             VerticalAlignment="Center">
+                    <Ellipse Width="8" Height="8" Fill="{DynamicResource ErrorBrush}" Margin="0,0,8,0" VerticalAlignment="Center">
                         <Ellipse.Style>
                             <Style TargetType="Ellipse">
                                 <Style.Triggers>
                                     <EventTrigger RoutedEvent="Loaded">
                                         <BeginStoryboard>
                                             <Storyboard RepeatBehavior="Forever">
-                                                <DoubleAnimation Storyboard.TargetProperty="Opacity"
-                                                                 From="1" To="0.25"
-                                                                 Duration="0:0:0.9" AutoReverse="True"/>
+                                                <DoubleAnimation Storyboard.TargetProperty="Opacity" From="1" To="0.3" Duration="0:0:0.9" AutoReverse="True"/>
                                             </Storyboard>
                                         </BeginStoryboard>
                                     </EventTrigger>
@@ -223,37 +137,24 @@
                             </Style>
                         </Ellipse.Style>
                     </Ellipse>
-                    <TextBlock Text="LIVE INTEL RECON LOG STREAM"
-                               FontSize="11" FontFamily="Cascadia Code, Consolas"
-                               FontWeight="Bold" Foreground="#B8B8D8" VerticalAlignment="Center"
-                               TextOptions.TextFormattingMode="Display"/>
+                    <TextBlock Text="Live activity log" Style="{StaticResource SectionLabel}"/>
                 </StackPanel>
 
-                <!-- Scrollable Console List -->
-                <Border Grid.Row="1" CornerRadius="6" Background="#0E0E1A"
-                        BorderBrush="#282838" BorderThickness="1">
-                    <ScrollViewer VerticalScrollBarVisibility="Auto"
-                                  Background="Transparent" Padding="12,10">
-                        <ItemsControl ItemsSource="{Binding DataContext.ActivityLog,
-                                      RelativeSource={RelativeSource AncestorType=Window}}">
+                <Border Grid.Row="1"
+                        CornerRadius="8"
+                        Background="{DynamicResource ConsoleBackgroundBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="1">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="12,10">
+                        <ItemsControl ItemsSource="{Binding DataContext.ActivityLog, RelativeSource={RelativeSource AncestorType=Window}}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Grid Margin="0,2,0,2">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto"/>
-                                            <ColumnDefinition Width="*"/>
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0"
-                                                   Text="❯" FontFamily="Cascadia Code, Consolas"
-                                                   FontSize="12" Foreground="#7C6FE4"
-                                                   Margin="0,0,8,0" VerticalAlignment="Top"/>
-                                        <TextBlock Grid.Column="1"
-                                                   Text="{Binding}"
-                                                   FontFamily="Cascadia Code, Consolas, Courier New"
-                                                   FontSize="12" Foreground="#A8E6A8"
-                                                   TextWrapping="Wrap"
-                                                   TextOptions.TextFormattingMode="Display"/>
-                                    </Grid>
+                                    <TextBlock Text="{Binding}"
+                                               FontFamily="{StaticResource MonoFontFamily}"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource ConsoleForegroundBrush}"
+                                               TextWrapping="Wrap"
+                                               Margin="0,2"/>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
@@ -262,5 +163,4 @@
             </Grid>
         </Border>
     </Grid>
-
 </UserControl>

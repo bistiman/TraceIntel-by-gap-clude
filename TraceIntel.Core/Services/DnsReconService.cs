@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using DnsClient;
@@ -13,8 +14,7 @@ namespace TraceIntel.Core.Services
 {
     public class DnsReconService
     {
-        // Common subdomains for quick DNS brute-forcing
-        private static readonly string[] CommonSubdomains = new[]
+        private static readonly string[] CommonSubdomains =
         {
             "www", "mail", "remote", "vpn", "api", "dev", "stage", "blog",
             "server", "secure", "admin", "ftp", "portal", "mx", "support",
@@ -23,14 +23,21 @@ namespace TraceIntel.Core.Services
             "sip", "smtp", "pop", "imap", "dns", "exchange", "gw", "backup"
         };
 
-        private LookupClient CreateLookupClient(string? customDnsServer)
+        private static readonly string[] RecordTypeOrder =
         {
-            if (!string.IsNullOrWhiteSpace(customDnsServer) && IPAddress.TryParse(customDnsServer.Trim(), out var ip))
+            "A", "AAAA", "CNAME", "MX", "NS", "TXT", "SOA", "SRV", "CAA", "PTR",
+            "BRUTE", "AXFR", "AXFR SUCCESS", "AXFR FAIL", "AXFR ERROR"
+        };
+
+        public async Task<LookupClient> CreateLookupClientAsync(string? customDnsServer, int timeoutMs, CancellationToken ct)
+        {
+            var resolverIp = await ResolveCustomDnsServerAsync(customDnsServer, ct);
+            if (resolverIp != null)
             {
-                return new LookupClient(new LookupClientOptions(new[] { ip })
+                return new LookupClient(new LookupClientOptions(new[] { resolverIp })
                 {
                     UseCache = true,
-                    Timeout = TimeSpan.FromSeconds(3),
+                    Timeout = TimeSpan.FromMilliseconds(timeoutMs),
                     Retries = 1
                 });
             }
@@ -38,7 +45,7 @@ namespace TraceIntel.Core.Services
             return new LookupClient(new LookupClientOptions
             {
                 UseCache = true,
-                Timeout = TimeSpan.FromSeconds(4),
+                Timeout = TimeSpan.FromMilliseconds(timeoutMs),
                 Retries = 2
             });
         }
@@ -48,36 +55,65 @@ namespace TraceIntel.Core.Services
             List<string> selectedTypes,
             string? customDnsServer,
             bool bruteForceSubdomains,
+            int timeoutMs,
             CancellationToken ct)
         {
             if (string.IsNullOrWhiteSpace(domain))
+            {
                 return new List<DnsRecord>();
+            }
 
             var records = new List<DnsRecord>();
-            var client = CreateLookupClient(customDnsServer);
+            var client = await CreateLookupClientAsync(customDnsServer, timeoutMs, ct);
 
             try
             {
-                // Parse standard selected query types
+                if (IPAddress.TryParse(domain, out var ipAddress))
+                {
+                    records.AddRange(await PerformReverseDnsAsync(client, ipAddress, ct));
+                    return FinalizeRecords(records);
+                }
+
                 var standardTypes = new List<QueryType>();
-                bool doAxfr = false;
+                var doAxfr = false;
 
                 foreach (var type in selectedTypes)
                 {
                     var upperType = type.ToUpperInvariant();
-                    if (upperType == "AXFR" || upperType == "ZONE TRANSFER")
+                    if (upperType is "AXFR" or "ZONE TRANSFER")
                     {
                         doAxfr = true;
                         continue;
                     }
 
-                    if (Enum.TryParse<QueryType>(upperType, out var queryType))
+                    if (Enum.TryParse<QueryType>(upperType, out var queryType) && queryType != QueryType.ANY)
                     {
                         standardTypes.Add(queryType);
                     }
                 }
 
-                // 1. Run Standard DNS Queries in Parallel
+                if (standardTypes.Count == 0 && !doAxfr && !bruteForceSubdomains)
+                {
+                    records.Add(new DnsRecord
+                    {
+                        RecordType = "INFO",
+                        Name = domain,
+                        Value = "No record types selected",
+                        Details = "Choose at least one record type or enable zone transfer / brute force."
+                    });
+                    return FinalizeRecords(records);
+                }
+
+                List<string>? nameServers = null;
+                var needsNs = standardTypes.Contains(QueryType.NS) || doAxfr;
+                if (needsNs)
+                {
+                    var nsResult = await QueryNsAsync(client, domain, ct);
+                    records.AddRange(nsResult.Records);
+                    nameServers = nsResult.NameServers;
+                    standardTypes.Remove(QueryType.NS);
+                }
+
                 if (standardTypes.Count > 0)
                 {
                     var tasks = standardTypes.Select(type => SafeQueryAsync(client, domain, type, ct));
@@ -88,19 +124,22 @@ namespace TraceIntel.Core.Services
                     }
                 }
 
-                // 2. Run Zone Transfer AXFR Attempt if Selected
                 if (doAxfr)
                 {
-                    var axfrRecords = await AttemptZoneTransferAsync(client, domain, ct);
-                    records.AddRange(axfrRecords);
+                    records.AddRange(await AttemptZoneTransferAsync(client, domain, nameServers, ct));
                 }
 
-                // 3. Run Subdomain Brute-forcing if Selected
                 if (bruteForceSubdomains)
                 {
-                    var bruteRecords = await PerformSubdomainBruteForceAsync(client, domain, ct);
-                    records.AddRange(bruteRecords);
+                    var existingNames = new HashSet<string>(
+                        records.Select(r => r.Name),
+                        StringComparer.OrdinalIgnoreCase);
+                    records.AddRange(await PerformSubdomainBruteForceAsync(client, domain, existingNames, ct));
                 }
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
             }
             catch (Exception ex)
             {
@@ -113,7 +152,101 @@ namespace TraceIntel.Core.Services
                 });
             }
 
+            return FinalizeRecords(records);
+        }
+
+        private static async Task<IPAddress?> ResolveCustomDnsServerAsync(string? customDnsServer, CancellationToken ct)
+        {
+            if (string.IsNullOrWhiteSpace(customDnsServer))
+            {
+                return null;
+            }
+
+            var trimmed = customDnsServer.Trim();
+            if (IPAddress.TryParse(trimmed, out var ip))
+            {
+                return ip;
+            }
+
+            try
+            {
+                var addresses = await Dns.GetHostAddressesAsync(trimmed, ct);
+                return addresses.FirstOrDefault(a => a.AddressFamily == AddressFamily.InterNetwork)
+                       ?? addresses.FirstOrDefault();
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private async Task<List<DnsRecord>> PerformReverseDnsAsync(LookupClient client, IPAddress ip, CancellationToken ct)
+        {
+            var records = new List<DnsRecord>();
+            var reverseName = BuildReverseLookupName(ip);
+            if (string.IsNullOrWhiteSpace(reverseName))
+            {
+                records.Add(new DnsRecord
+                {
+                    RecordType = "INFO",
+                    Name = ip.ToString(),
+                    Value = "Reverse lookup not supported for this address family",
+                    Details = "Only IPv4 reverse lookups are supported in this build."
+                });
+                return records;
+            }
+
+            var response = await client.QueryAsync(reverseName, QueryType.PTR, QueryClass.IN, ct);
+            if (response == null || response.HasError || !response.Answers.Any())
+            {
+                records.Add(new DnsRecord
+                {
+                    RecordType = "PTR",
+                    Name = ip.ToString(),
+                    Value = "No PTR record found",
+                    Details = response?.ErrorMessage ?? "No reverse DNS mapping available."
+                });
+                return records;
+            }
+
+            foreach (var answer in response.Answers)
+            {
+                var record = MapRecord(answer);
+                if (record != null)
+                {
+                    record.Name = ip.ToString();
+                    records.Add(record);
+                }
+            }
+
             return records;
+        }
+
+        private static string? BuildReverseLookupName(IPAddress ip)
+        {
+            if (ip.AddressFamily != AddressFamily.InterNetwork)
+            {
+                return null;
+            }
+
+            var bytes = ip.GetAddressBytes();
+            return $"{bytes[3]}.{bytes[2]}.{bytes[1]}.{bytes[0]}.in-addr.arpa";
+        }
+
+        private async Task<(List<DnsRecord> Records, List<string> NameServers)> QueryNsAsync(
+            LookupClient client,
+            string domain,
+            CancellationToken ct)
+        {
+            var records = await SafeQueryAsync(client, domain, QueryType.NS, ct);
+            var nameServers = records
+                .Where(r => string.Equals(r.RecordType, "NS", StringComparison.OrdinalIgnoreCase))
+                .Select(r => r.Value.TrimEnd('.'))
+                .Where(v => !string.IsNullOrWhiteSpace(v))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            return (records, nameServers);
         }
 
         private async Task<List<DnsRecord>> SafeQueryAsync(LookupClient client, string domain, QueryType type, CancellationToken ct)
@@ -122,7 +255,17 @@ namespace TraceIntel.Core.Services
             try
             {
                 var response = await client.QueryAsync(domain, type, QueryClass.IN, ct);
-                if (response == null || response.HasError) return resultList;
+                if (response == null)
+                {
+                    resultList.Add(BuildQueryStatusRecord(domain, type, "No response", "The resolver did not return a response."));
+                    return resultList;
+                }
+
+                if (response.HasError)
+                {
+                    resultList.Add(BuildQueryStatusRecord(domain, type, "Query failed", response.ErrorMessage ?? "Resolver returned an error."));
+                    return resultList;
+                }
 
                 foreach (var answer in response.Answers)
                 {
@@ -132,27 +275,61 @@ namespace TraceIntel.Core.Services
                         resultList.Add(record);
                     }
                 }
+
+                if (resultList.Count == 0)
+                {
+                    resultList.Add(BuildQueryStatusRecord(domain, type, "No records", "The query succeeded but returned no answers."));
+                }
             }
-            catch (Exception)
+            catch (OperationCanceledException)
             {
-                // Graceful failure per query type
+                throw;
             }
+            catch (Exception ex)
+            {
+                resultList.Add(BuildQueryStatusRecord(domain, type, "Query error", ex.Message));
+            }
+
             return resultList;
         }
 
-        private async Task<List<DnsRecord>> AttemptZoneTransferAsync(LookupClient client, string domain, CancellationToken ct)
+        private static DnsRecord BuildQueryStatusRecord(string domain, QueryType type, string value, string details)
+        {
+            return new DnsRecord
+            {
+                RecordType = type.ToString(),
+                Name = domain,
+                Value = value,
+                Details = details
+            };
+        }
+
+        private async Task<List<DnsRecord>> AttemptZoneTransferAsync(
+            LookupClient client,
+            string domain,
+            IReadOnlyList<string>? knownNameServers,
+            CancellationToken ct)
         {
             var resultList = new List<DnsRecord>();
             try
             {
-                // Zone transfer usually requires querying the authoritative name server directly
-                // So first query NS servers for the domain
-                var nsResponse = await client.QueryAsync(domain, QueryType.NS, QueryClass.IN, ct);
-                var nsServers = nsResponse?.Answers.OfType<NsRecord>().Select(r => r.NSDName.Value).ToList() ?? new List<string>();
-
-                if (!nsServers.Any())
+                var nsServers = knownNameServers?.ToList() ?? new List<string>();
+                if (nsServers.Count == 0)
                 {
-                    nsServers.Add(domain); // fallback to domain itself
+                    var nsResult = await QueryNsAsync(client, domain, ct);
+                    nsServers = nsResult.NameServers;
+                }
+
+                if (nsServers.Count == 0)
+                {
+                    resultList.Add(new DnsRecord
+                    {
+                        RecordType = "AXFR ERROR",
+                        Name = domain,
+                        Value = "No nameservers found",
+                        Details = "Zone transfer requires at least one authoritative NS record."
+                    });
+                    return resultList;
                 }
 
                 foreach (var ns in nsServers)
@@ -165,18 +342,26 @@ namespace TraceIntel.Core.Services
                         var ipResponse = await client.QueryAsync(ns, QueryType.A, QueryClass.IN, ct);
                         nsIp = ipResponse?.Answers.OfType<ARecord>().FirstOrDefault()?.Address;
                     }
-                    catch { /* ignore */ }
+                    catch
+                    {
+                        // ignore resolution failure for this NS
+                    }
 
-                    if (nsIp == null) continue;
+                    if (nsIp == null)
+                    {
+                        continue;
+                    }
 
-                    // Query AXFR directly to this NS
-                    var axfrClient = new LookupClient(new LookupClientOptions(new[] { nsIp }) { Timeout = TimeSpan.FromSeconds(4) });
-                    
+                    var axfrClient = new LookupClient(new LookupClientOptions(new[] { nsIp })
+                    {
+                        Timeout = TimeSpan.FromSeconds(4)
+                    });
+
                     resultList.Add(new DnsRecord
                     {
                         RecordType = "AXFR",
                         Name = domain,
-                        Value = $"Attempting Zone Transfer",
+                        Value = "Attempting zone transfer",
                         Details = $"Targeting NS: {ns} ({nsIp})"
                     });
 
@@ -189,27 +374,29 @@ namespace TraceIntel.Core.Services
                             {
                                 RecordType = "AXFR SUCCESS",
                                 Name = domain,
-                                Value = $"Zone Transfer Succeeded!",
-                                Details = $"Discovered {axfrResponse.Answers.Count} records from {ns}!"
+                                Value = "Zone transfer succeeded",
+                                Details = $"Discovered {axfrResponse.Answers.Count} records from {ns}."
                             });
 
                             foreach (var answer in axfrResponse.Answers)
                             {
                                 var record = MapRecord(answer);
-                                if (record != null) resultList.Add(record);
+                                if (record != null)
+                                {
+                                    resultList.Add(record);
+                                }
                             }
-                            break; // Stop querying other NS if one succeeds
+
+                            break;
                         }
-                        else
+
+                        resultList.Add(new DnsRecord
                         {
-                            resultList.Add(new DnsRecord
-                            {
-                                RecordType = "AXFR FAIL",
-                                Name = domain,
-                                Value = $"Transfer Refused / Closed",
-                                Details = $"NS {ns} returned: {axfrResponse?.ErrorMessage ?? "Access Denied"}"
-                            });
-                        }
+                            RecordType = "AXFR FAIL",
+                            Name = domain,
+                            Value = "Transfer refused",
+                            Details = $"NS {ns} returned: {axfrResponse?.ErrorMessage ?? "Access denied"}"
+                        });
                     }
                     catch (Exception ex)
                     {
@@ -223,61 +410,82 @@ namespace TraceIntel.Core.Services
                     }
                 }
             }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
             catch (Exception ex)
             {
                 resultList.Add(new DnsRecord
                 {
                     RecordType = "AXFR ERROR",
                     Name = domain,
-                    Value = "Zone Transfer Failure",
+                    Value = "Zone transfer failure",
                     Details = ex.Message
                 });
             }
+
             return resultList;
         }
 
-        private async Task<List<DnsRecord>> PerformSubdomainBruteForceAsync(LookupClient client, string domain, CancellationToken ct)
+        private async Task<List<DnsRecord>> PerformSubdomainBruteForceAsync(
+            LookupClient client,
+            string domain,
+            HashSet<string> existingNames,
+            CancellationToken ct)
         {
             var resultList = new ConcurrentBag<DnsRecord>();
-            
-            // Limit concurrency during brute force
             using var sem = new SemaphoreSlim(15);
-            
+
             var tasks = CommonSubdomains.Select(async sub =>
             {
                 await sem.WaitAsync(ct);
                 try
                 {
                     var target = $"{sub}.{domain}";
-                    var response = await client.QueryAsync(target, QueryType.A, QueryClass.IN, ct);
-                    if (response != null && !response.HasError && response.Answers.Any())
+                    if (existingNames.Contains(target))
                     {
-                        foreach (var answer in response.Answers)
+                        return;
+                    }
+
+                    var response = await client.QueryAsync(target, QueryType.A, QueryClass.IN, ct);
+                    if (response == null || response.HasError || !response.Answers.Any())
+                    {
+                        return;
+                    }
+
+                    foreach (var answer in response.Answers)
+                    {
+                        if (answer is ARecord aRec)
                         {
-                            if (answer is ARecord aRec)
+                            resultList.Add(new DnsRecord
                             {
-                                resultList.Add(new DnsRecord
-                                {
-                                    RecordType = "BRUTE",
-                                    Name = target,
-                                    Value = aRec.Address.ToString(),
-                                    Details = $"Subdomain Discovered (A Record)"
-                                });
-                            }
-                            else if (answer is CNameRecord cNameRec)
+                                RecordType = "BRUTE",
+                                Name = target,
+                                Value = aRec.Address.ToString(),
+                                Details = "Subdomain discovered (A record)"
+                            });
+                        }
+                        else if (answer is CNameRecord cNameRec)
+                        {
+                            resultList.Add(new DnsRecord
                             {
-                                resultList.Add(new DnsRecord
-                                {
-                                    RecordType = "BRUTE",
-                                    Name = target,
-                                    Value = cNameRec.CanonicalName.Value,
-                                    Details = $"Subdomain Discovered (CNAME mapping)"
-                                });
-                            }
+                                RecordType = "BRUTE",
+                                Name = target,
+                                Value = cNameRec.CanonicalName.Value,
+                                Details = "Subdomain discovered (CNAME mapping)"
+                            });
                         }
                     }
                 }
-                catch { /* ignore individual brute failures */ }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
+                catch
+                {
+                    // ignore individual brute failures
+                }
                 finally
                 {
                     sem.Release();
@@ -288,7 +496,17 @@ namespace TraceIntel.Core.Services
             return resultList.ToList();
         }
 
-        private DnsRecord? MapRecord(DnsResourceRecord answer)
+        private static List<DnsRecord> FinalizeRecords(List<DnsRecord> records)
+        {
+            return records
+                .GroupBy(r => (r.RecordType, r.Name, r.Value, r.Details))
+                .Select(g => g.First())
+                .OrderBy(r => Array.IndexOf(RecordTypeOrder, r.RecordType) is var idx && idx >= 0 ? idx : 99)
+                .ThenBy(r => r.Name, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+        }
+
+        private static DnsRecord? MapRecord(DnsResourceRecord answer)
         {
             switch (answer)
             {
@@ -297,24 +515,24 @@ namespace TraceIntel.Core.Services
                 case AaaaRecord aaaaRecord:
                     return new DnsRecord { RecordType = "AAAA", Name = aaaaRecord.DomainName.Value, Value = aaaaRecord.Address.ToString(), Details = $"TTL: {aaaaRecord.InitialTimeToLive}s | IPv6 address mapping" };
                 case MxRecord mxRecord:
-                    return new DnsRecord { RecordType = "MX", Name = mxRecord.DomainName.Value, Value = mxRecord.Exchange.Value, Details = $"Priority Preference: {mxRecord.Preference} | TTL: {mxRecord.InitialTimeToLive}s" };
+                    return new DnsRecord { RecordType = "MX", Name = mxRecord.DomainName.Value, Value = mxRecord.Exchange.Value, Details = $"Priority: {mxRecord.Preference} | TTL: {mxRecord.InitialTimeToLive}s" };
                 case NsRecord nsRecord:
-                    return new DnsRecord { RecordType = "NS", Name = nsRecord.DomainName.Value, Value = nsRecord.NSDName.Value, Details = $"Authoritative Name Server | TTL: {nsRecord.InitialTimeToLive}s" };
+                    return new DnsRecord { RecordType = "NS", Name = nsRecord.DomainName.Value, Value = nsRecord.NSDName.Value, Details = $"Authoritative name server | TTL: {nsRecord.InitialTimeToLive}s" };
                 case CNameRecord cnameRecord:
-                    return new DnsRecord { RecordType = "CNAME", Name = cnameRecord.DomainName.Value, Value = cnameRecord.CanonicalName.Value, Details = $"Alias mapping -> Canonical host | TTL: {cnameRecord.InitialTimeToLive}s" };
+                    return new DnsRecord { RecordType = "CNAME", Name = cnameRecord.DomainName.Value, Value = cnameRecord.CanonicalName.Value, Details = $"Alias mapping | TTL: {cnameRecord.InitialTimeToLive}s" };
                 case TxtRecord txtRecord:
                     var textValue = string.Join(" ", txtRecord.Text);
-                    return new DnsRecord { RecordType = "TXT", Name = txtRecord.DomainName.Value, Value = textValue, Details = $"Text attributes (SPF/DKIM/DMARC metadata) | TTL: {txtRecord.InitialTimeToLive}s" };
+                    return new DnsRecord { RecordType = "TXT", Name = txtRecord.DomainName.Value, Value = textValue, Details = $"Text record | TTL: {txtRecord.InitialTimeToLive}s" };
                 case SoaRecord soaRecord:
-                    return new DnsRecord { RecordType = "SOA", Name = soaRecord.DomainName.Value, Value = soaRecord.MName.Value, Details = $"Primary NS | Admin: {soaRecord.RName.Value} | Serial: {soaRecord.Serial} | Retry: {soaRecord.Retry}s | Expire: {soaRecord.Expire}s | Default TTL: {soaRecord.Minimum}s" };
+                    return new DnsRecord { RecordType = "SOA", Name = soaRecord.DomainName.Value, Value = soaRecord.MName.Value, Details = $"Primary NS | Admin: {soaRecord.RName.Value} | Serial: {soaRecord.Serial} | Retry: {soaRecord.Retry}s | Expire: {soaRecord.Expire}s | Min TTL: {soaRecord.Minimum}s" };
                 case SrvRecord srvRecord:
-                    return new DnsRecord { RecordType = "SRV", Name = srvRecord.DomainName.Value, Value = $"{srvRecord.Target.Value}:{srvRecord.Port}", Details = $"Service record | Priority: {srvRecord.Priority} | Weight: {srvRecord.Weight} | TTL: {srvRecord.InitialTimeToLive}s" };
+                    return new DnsRecord { RecordType = "SRV", Name = srvRecord.DomainName.Value, Value = $"{srvRecord.Target.Value}:{srvRecord.Port}", Details = $"Priority: {srvRecord.Priority} | Weight: {srvRecord.Weight} | TTL: {srvRecord.InitialTimeToLive}s" };
                 case CaaRecord caaRecord:
-                    return new DnsRecord { RecordType = "CAA", Name = caaRecord.DomainName.Value, Value = $"{caaRecord.Tag} {caaRecord.Value}", Details = $"Certification Authority Authorization | Flags: {caaRecord.Flags}" };
+                    return new DnsRecord { RecordType = "CAA", Name = caaRecord.DomainName.Value, Value = $"{caaRecord.Tag} {caaRecord.Value}", Details = $"CAA | Flags: {caaRecord.Flags}" };
                 case PtrRecord ptrRecord:
-                    return new DnsRecord { RecordType = "PTR", Name = ptrRecord.DomainName.Value, Value = ptrRecord.PtrDomainName.Value, Details = $"Reverse DNS pointer map" };
+                    return new DnsRecord { RecordType = "PTR", Name = ptrRecord.DomainName.Value, Value = ptrRecord.PtrDomainName.Value, Details = "Reverse DNS pointer" };
                 default:
-                    return new DnsRecord { RecordType = answer.RecordType.ToString(), Name = answer.DomainName.Value, Value = answer.ToString(), Details = $"Raw record details" };
+                    return new DnsRecord { RecordType = answer.RecordType.ToString(), Name = answer.DomainName.Value, Value = answer.ToString() ?? string.Empty, Details = "Raw record details" };
             }
         }
     }

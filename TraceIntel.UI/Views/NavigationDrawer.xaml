@@ -25,8 +25,9 @@
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="Button">
-            <Border Background="{TemplateBinding Background}"
-                    CornerRadius="6"
+            <Border x:Name="NavBorder"
+                    Background="{TemplateBinding Background}"
+                    CornerRadius="8"
                     Padding="{TemplateBinding Padding}">
               <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                 <TextBlock Style="{StaticResource NavIconStyle}"
@@ -68,7 +69,7 @@
           <Style TargetType="Button" BasedOn="{StaticResource NavItemStyle}">
             <Style.Triggers>
               <DataTrigger Binding="{Binding IsDashboardActive}" Value="True">
-                <Setter Property="Background" Value="{DynamicResource SurfaceElevatedBrush}" />
+                <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
                 <Setter Property="Foreground" Value="{DynamicResource SecondaryBrush}" />
               </DataTrigger>
             </Style.Triggers>
@@ -81,7 +82,7 @@
           <Style TargetType="Button" BasedOn="{StaticResource NavItemStyle}">
             <Style.Triggers>
               <DataTrigger Binding="{Binding IsTraceActive}" Value="True">
-                <Setter Property="Background" Value="{DynamicResource SurfaceElevatedBrush}" />
+                <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
                 <Setter Property="Foreground" Value="{DynamicResource SecondaryBrush}" />
               </DataTrigger>
             </Style.Triggers>
@@ -94,7 +95,7 @@
           <Style TargetType="Button" BasedOn="{StaticResource NavItemStyle}">
             <Style.Triggers>
               <DataTrigger Binding="{Binding IsPingActive}" Value="True">
-                <Setter Property="Background" Value="{DynamicResource SurfaceElevatedBrush}" />
+                <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
                 <Setter Property="Foreground" Value="{DynamicResource SecondaryBrush}" />
               </DataTrigger>
             </Style.Triggers>
@@ -107,7 +108,7 @@
           <Style TargetType="Button" BasedOn="{StaticResource NavItemStyle}">
             <Style.Triggers>
               <DataTrigger Binding="{Binding IsDnsReconActive}" Value="True">
-                <Setter Property="Background" Value="{DynamicResource SurfaceElevatedBrush}" />
+                <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
                 <Setter Property="Foreground" Value="{DynamicResource SecondaryBrush}" />
               </DataTrigger>
             </Style.Triggers>
@@ -120,7 +121,7 @@
           <Style TargetType="Button" BasedOn="{StaticResource NavItemStyle}">
             <Style.Triggers>
               <DataTrigger Binding="{Binding IsSettingsActive}" Value="True">
-                <Setter Property="Background" Value="{DynamicResource SurfaceElevatedBrush}" />
+                <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
                 <Setter Property="Foreground" Value="{DynamicResource SecondaryBrush}" />
               </DataTrigger>
             </Style.Triggers>

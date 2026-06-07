@@ -6,98 +6,67 @@
              mc:Ignorable="d"
              d:DesignHeight="700" d:DesignWidth="1100">
 
-    <UserControl.Resources>
-        <Style x:Key="StopButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-            <Setter Property="Background" Value="#E74C3C"/>
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#F75C4C"/>
-                </Trigger>
-            </Style.Triggers>
-        </Style>
-    </UserControl.Resources>
-
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- Top Panel: Inputs and Controls -->
-        <Border Grid.Row="0"
-                Background="#242433"
-                BorderBrush="#34344A"
-                BorderThickness="1"
-                CornerRadius="10"
-                Padding="16"
-                Margin="0,0,0,16">
+        <Border Grid.Row="0" Style="{StaticResource PanelCard}">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <StackPanel Grid.Column="0" Orientation="Vertical" Margin="0,0,20,0">
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                        <TextBlock Text="Target Host or IP Address" Foreground="#C9C9E6" FontWeight="SemiBold"/>
-                        <TextBlock Text=" | Status: " Foreground="#7F7FA3"/>
-                        <TextBlock Text="{Binding PingStatus}" Foreground="#FFB020" FontWeight="Bold"/>
-                        <TextBlock Text=" | Latency: " Foreground="#7F7FA3"/>
-                        <TextBlock Text="{Binding PingLatency}" Foreground="#00FF33" FontWeight="Bold"/>
-                    </StackPanel>
-                    <TextBox Height="40" 
-                             Text="{Binding PingTarget, UpdateSourceTrigger=PropertyChanged}" 
-                             ToolTip="Enter host (e.g., google.com) or IP (e.g., 8.8.8.8)"/>
+                <StackPanel Grid.Column="0" Margin="0,0,20,0">
+                    <TextBlock Margin="0,0,0,8">
+                        <Run Text="Target host or IP" FontWeight="SemiBold"/>
+                        <Run Text=" · Status: " Foreground="{DynamicResource MutedForegroundBrush}"/>
+                        <Run Text="{Binding PingStatus}" Foreground="{DynamicResource WarningBrush}" FontWeight="SemiBold"/>
+                        <Run Text=" · Latency: " Foreground="{DynamicResource MutedForegroundBrush}"/>
+                        <Run Text="{Binding PingLatency}" Foreground="{DynamicResource SuccessBrush}" FontWeight="SemiBold"/>
+                    </TextBlock>
+                    <TextBox Height="42"
+                             Text="{Binding PingTarget, UpdateSourceTrigger=PropertyChanged}"
+                             ToolTip="e.g. google.com or 8.8.8.8"/>
                 </StackPanel>
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Bottom">
-                    <Button Content="Start Ping" 
-                            Command="{Binding StartPingCommand}" 
-                            Width="140" Height="40" 
+                    <Button Content="Start Ping"
+                            Command="{Binding StartPingCommand}"
+                            Style="{StaticResource BaseButton}"
+                            Width="140" Height="40"
                             Margin="0,0,10,0"/>
-                    <Button Content="Stop" 
-                            Command="{Binding StopPingCommand}" 
-                            Style="{StaticResource StopButton}" 
+                    <Button Content="Stop"
+                            Command="{Binding StopPingCommand}"
+                            Style="{StaticResource DangerButton}"
                             Width="90" Height="40"/>
                 </StackPanel>
             </Grid>
         </Border>
 
-        <!-- Bottom Panel: Output Display -->
-        <Border Grid.Row="1"
-                Background="#242433"
-                BorderBrush="#34344A"
-                BorderThickness="1"
-                CornerRadius="10"
-                Padding="16">
+        <Border Grid.Row="1" Style="{StaticResource CardBorder}">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
-                
-                <TextBlock Grid.Row="0" 
-                           Text="ICMP Ping Output" 
-                           FontSize="14" 
-                           FontWeight="Bold" 
-                           Foreground="#6C5CE7" 
-                           Margin="0,0,0,10"/>
-                           
-                <ListBox Grid.Row="1" 
+
+                <TextBlock Grid.Row="0"
+                           Text="ICMP ping output"
+                           FontWeight="SemiBold"
+                           Foreground="{DynamicResource PrimaryBrush}"
+                           Margin="0,0,0,12"/>
+
+                <ListBox Grid.Row="1"
                          ItemsSource="{Binding PingOutput}"
-                         Background="#111119" 
-                         BorderBrush="#34344A" 
-                         BorderThickness="1"
-                         Foreground="#00FF33" 
-                         FontFamily="Consolas, Courier New" 
-                         FontSize="14" 
-                         Padding="10">
-                    <ListBox.ItemTemplate>
-                        <DataTemplate>
-                            <TextBlock Text="{Binding}"/>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                </ListBox>
+                         FontFamily="{StaticResource MonoFontFamily}"
+                         FontSize="{StaticResource FontSizeBody}"
+                         Foreground="{DynamicResource ConsoleForegroundBrush}"
+                         Background="{DynamicResource ConsoleBackgroundBrush}"
+                         BorderBrush="{DynamicResource BorderBrush}"
+                         BorderThickness="1"/>
             </Grid>
         </Border>
     </Grid>

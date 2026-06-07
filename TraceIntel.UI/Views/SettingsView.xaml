@@ -9,87 +9,101 @@
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="400"/>
+            <ColumnDefinition Width="380"/>
         </Grid.ColumnDefinitions>
 
-        <!-- System Settings & Engine Configuration -->
-        <Border Grid.Column="0" Background="#242433" BorderBrush="#34344A" BorderThickness="1" CornerRadius="14" Padding="20" Margin="0,0,15,0">
+        <Border Grid.Column="0" Style="{StaticResource CardBorder}" Margin="0,0,16,0">
             <ScrollViewer VerticalScrollBarVisibility="Auto">
                 <StackPanel>
-                    <TextBlock Text="System Settings &amp; Engine Configuration" FontSize="18" FontWeight="Bold" Foreground="#6C5CE7" Margin="0,0,0,15"/>
+                    <TextBlock Text="Engine configuration"
+                               FontSize="18"
+                               FontWeight="Bold"
+                               Foreground="{DynamicResource PrimaryBrush}"
+                               Margin="0,0,0,20"/>
 
-                    <!-- Traceroute Concurrency -->
-                    <TextBlock Text="Maximum Concurrent Traceroutes" Foreground="#C9C9E6" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                    <TextBlock Text="Maximum concurrent traceroutes" Style="{StaticResource SectionLabel}" Margin="0,0,0,8"/>
                     <Grid Margin="0,0,0,20">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="60"/>
                         </Grid.ColumnDefinitions>
-                        <Slider Grid.Column="0" Minimum="1" Maximum="50" TickFrequency="1" IsSnapToTickEnabled="True" 
-                                Value="{Binding SettingsParallelism}" VerticalAlignment="Center"/>
-                        <TextBlock Grid.Column="1" Text="{Binding SettingsParallelism}" Foreground="White" FontSize="14" 
-                                   HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold"/>
+                        <Slider Grid.Column="0"
+                                Minimum="1" Maximum="50"
+                                TickFrequency="1" IsSnapToTickEnabled="True"
+                                Value="{Binding SettingsParallelism}"
+                                VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="1"
+                                   Text="{Binding SettingsParallelism}"
+                                   FontWeight="Bold"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"/>
                     </Grid>
 
-                    <!-- Timeout Slider -->
-                    <TextBlock Text="Traceroute / DNS Probe Timeout (milliseconds)" Foreground="#C9C9E6" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                    <TextBlock Text="Traceroute / DNS timeout (ms)" Style="{StaticResource SectionLabel}" Margin="0,0,0,8"/>
                     <Grid Margin="0,0,0,20">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="80"/>
                         </Grid.ColumnDefinitions>
-                        <Slider Grid.Column="0" Minimum="200" Maximum="5000" TickFrequency="100" IsSnapToTickEnabled="True" 
-                                Value="{Binding SettingsTimeoutMs}" VerticalAlignment="Center"/>
-                        <TextBlock Grid.Column="1" Text="{Binding SettingsTimeoutMs, StringFormat={}{0} ms}" Foreground="White" FontSize="14" 
-                                   HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold"/>
+                        <Slider Grid.Column="0"
+                                Minimum="500" Maximum="10000"
+                                TickFrequency="100" IsSnapToTickEnabled="True"
+                                Value="{Binding SettingsTimeoutMs}"
+                                VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="1"
+                                   Text="{Binding SettingsTimeoutMs, StringFormat={}{0} ms}"
+                                   FontWeight="Bold"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"/>
                     </Grid>
 
-                    <!-- Custom default DNS Server -->
-                    <TextBlock Text="Default Custom DNS Server" Foreground="#C9C9E6" FontWeight="SemiBold" Margin="0,0,0,6"/>
-                    <TextBox Height="38" Text="{Binding SettingsDefaultDnsServer, UpdateSourceTrigger=PropertyChanged}" 
-                             ToolTip="The default server to prefill DNS Custom options (e.g. 1.1.1.1)"/>
-                    <TextBlock Text="Tip: System will query local network resolvers if left blank." Foreground="#7F7FA3" Margin="0,4,0,20" FontSize="12"/>
+                    <TextBlock Text="Default DNS resolver" Style="{StaticResource SectionLabel}" Margin="0,0,0,8"/>
+                    <TextBox Height="42"
+                             Text="{Binding SettingsDefaultDnsServer, UpdateSourceTrigger=PropertyChanged}"
+                             ToolTip="Prefills DNS Recon custom resolver (e.g. 1.1.1.1)"/>
+                    <TextBlock Text="Used when DNS Recon custom resolver is empty."
+                               Foreground="{DynamicResource MutedForegroundBrush}"
+                               FontSize="11"
+                               Margin="0,6,0,20"/>
 
-                    <!-- Cache Toggle -->
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,20">
-                        <CheckBox Content="Enable DNS &amp; IP Geo Cache Lookups" Foreground="White" FontSize="14" IsChecked="{Binding SettingsEnableCache}"/>
-                    </StackPanel>
+                    <CheckBox Content="Enable DNS &amp; IP geo cache lookups"
+                              Margin="0,0,0,20"
+                              IsChecked="{Binding SettingsEnableCache}"/>
 
-                    <!-- Default Export Folder -->
-                    <TextBlock Text="Default Export Data Path" Foreground="#C9C9E6" FontWeight="SemiBold" Margin="0,0,0,6"/>
-                    <TextBox Height="38" Text="{Binding SettingsDefaultExportPath, UpdateSourceTrigger=PropertyChanged}" 
-                             ToolTip="Custom folder directory to save reports"/>
-                    
+                    <TextBlock Text="Default export path" Style="{StaticResource SectionLabel}" Margin="0,0,0,8"/>
+                    <TextBox Height="42"
+                             Text="{Binding SettingsDefaultExportPath, UpdateSourceTrigger=PropertyChanged}"/>
                 </StackPanel>
             </ScrollViewer>
         </Border>
 
-        <!-- Sidebar Info / Guides -->
-        <Border Grid.Column="1" Background="#242433" BorderBrush="#34344A" BorderThickness="1" CornerRadius="14" Padding="20">
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
-                </Grid.RowDefinitions>
+        <Border Grid.Column="1" Style="{StaticResource CardBorder}">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+                    <TextBlock Text="Quick guide"
+                               FontSize="18"
+                               FontWeight="Bold"
+                               Foreground="{DynamicResource WarningBrush}"
+                               Margin="0,0,0,16"/>
 
-                <TextBlock Grid.Row="0" Text="TRACE X Guide" FontSize="18" FontWeight="Bold" Foreground="#FFB020" Margin="0,0,0,15"/>
-                
-                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-                    <StackPanel>
-                        <TextBlock Text="Traceroute Diagnostics" FontSize="14" FontWeight="Bold" Foreground="White" Margin="0,0,0,6"/>
-                        <TextBlock Text="Utilizes local ICMP packets to map intermediate router nodes. Quick Trace targets 5 hops for standard gateways. Complete matches 30 hops. Early Path Block occurs when security firewalls drop ICMP echo requests immediately." 
-                                   Foreground="#A8A8C8" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,15"/>
+                    <TextBlock Text="Traceroute" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                    <TextBlock Text="Map network paths with ICMP probes. Use Quick (5 hops) for gateways or Complete for full paths."
+                               TextWrapping="Wrap"
+                               Foreground="{DynamicResource SecondaryForegroundBrush}"
+                               Margin="0,0,0,16"/>
 
-                        <TextBlock Text="DNS Enumeration &amp; WHOIS" FontSize="14" FontWeight="Bold" Foreground="White" Margin="0,0,0,6"/>
-                        <TextBlock Text="Scans authoritative domains. Subdomain Brute Force tests top common production hosts for sub-site discovery. Zone Transfer (AXFR) will attempt full database replication, which usually returns REFUSED on standard secure servers." 
-                                   Foreground="#A8A8C8" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,15"/>
+                    <TextBlock Text="DNS Recon" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                    <TextBlock Text="Enumerate A, MX, NS, TXT, and more. Deep mode adds zone transfer and subdomain discovery."
+                               TextWrapping="Wrap"
+                               Foreground="{DynamicResource SecondaryForegroundBrush}"
+                               Margin="0,0,0,16"/>
 
-                        <TextBlock Text="NSLOOKUP (dig)" FontSize="14" FontWeight="Bold" Foreground="White" Margin="0,0,0,6"/>
-                        <TextBlock Text="Queries exact DNS records manually. Interactive NSLOOKUP allows testing specific name servers (like OpenDNS or Quad9) directly inside TRACE X." 
-                                   Foreground="#A8A8C8" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,15"/>
-                    </StackPanel>
-                </ScrollViewer>
-            </Grid>
+                    <TextBlock Text="Ping tool" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                    <TextBlock Text="Continuous ICMP echo for latency monitoring."
+                               TextWrapping="Wrap"
+                               Foreground="{DynamicResource SecondaryForegroundBrush}"/>
+                </StackPanel>
+            </ScrollViewer>
         </Border>
     </Grid>
 </UserControl>

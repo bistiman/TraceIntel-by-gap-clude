@@ -9,62 +9,22 @@
 
     <UserControl.Resources>
         <converters:InverseBoolConverter x:Key="InverseBoolConverter"/>
+        <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
         <converters:StringEmptyToVisibilityConverter x:Key="StringEmptyToVisibilityConverter"/>
         <converters:RadioStringEqualsConverter x:Key="RadioStringEqualsConverter"/>
 
-        <Style x:Key="PremiumRadio" TargetType="RadioButton">
-            <Setter Property="Foreground" Value="{DynamicResource ForegroundBrush}"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Margin" Value="0,0,12,0"/>
-        </Style>
-
-        <Style x:Key="StopButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-            <Setter Property="Background" Value="#E74C3C"/>
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#F75C4C"/>
-                </Trigger>
-            </Style.Triggers>
-        </Style>
-
-        <Style x:Key="ExportButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-            <Setter Property="Background" Value="#27AE60"/>
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#37BE70"/>
-                </Trigger>
-            </Style.Triggers>
-        </Style>
-
-        <Style TargetType="DataGrid">
-            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/>
-            <Setter Property="Foreground" Value="{DynamicResource ForegroundBrush}"/>
-            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="GridLinesVisibility" Value="None"/>
-            <Setter Property="HeadersVisibility" Value="Column"/>
-            <Setter Property="AutoGenerateColumns" Value="False"/>
-            <Setter Property="CanUserAddRows" Value="False"/>
-            <Setter Property="CanUserDeleteRows" Value="False"/>
-            <Setter Property="IsReadOnly" Value="True"/>
-            <Setter Property="SelectionMode" Value="Single"/>
+        <Style TargetType="DataGrid" BasedOn="{StaticResource BaseDataGrid}">
             <Setter Property="RowBackground" Value="{DynamicResource SurfaceBrush}"/>
             <Setter Property="AlternatingRowBackground" Value="{DynamicResource SurfaceElevatedBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+            <Setter Property="EnableRowVirtualization" Value="True"/>
         </Style>
 
-        <Style TargetType="DataGridColumnHeader">
-            <Setter Property="Background" Value="#7C6FE4"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="FontWeight" Value="Bold"/>
-            <Setter Property="Padding" Value="10"/>
-            <Setter Property="HorizontalContentAlignment" Value="Left"/>
-            <Setter Property="BorderBrush" Value="#383850"/>
-            <Setter Property="BorderThickness" Value="0,0,1,1"/>
-        </Style>
+        <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource BaseDataGridHeader}"/>
 
         <Style TargetType="DataGridCell">
             <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="Padding" Value="12,8"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="DataGridCell">
@@ -78,145 +38,251 @@
     </UserControl.Resources>
 
     <Grid>
-        <TabControl Background="{DynamicResource BackgroundBrush}" BorderThickness="0" Margin="0">
-            <!-- ====================== -->
-            <!-- SUB-TAB 1: DNS SCANNER -->
-            <!-- ====================== -->
+        <TabControl Background="{DynamicResource BackgroundBrush}" BorderThickness="0">
+            <TabControl.Resources>
+                <Style TargetType="TabItem" BasedOn="{StaticResource AccentTabItem}"/>
+            </TabControl.Resources>
+
+            <!-- DNS Scanner -->
             <TabItem Header="DNS Scanner">
-                <Grid Margin="0,10,0,0">
+                <Grid Margin="0,16,0,0">
                     <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
-                    <!-- DNS Target & Options Section -->
-                    <Border Grid.Row="0"
-                            Background="{DynamicResource SurfaceBrush}"
-                            BorderBrush="{DynamicResource BorderBrush}"
-                            BorderThickness="1"
-                            CornerRadius="10"
-                            Padding="16"
-                            Margin="0,0,0,12">
+                    <!-- Step 1: Target -->
+                    <Border Grid.Row="0" Style="{StaticResource PanelCard}">
                         <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="2*"/>
-                                <ColumnDefinition Width="2*"/>
+                                <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
 
-                            <!-- Left Column: Input and Mode -->
-                            <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Vertical" Margin="0,0,12,0">
-                                <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
-                                    <TextBlock Text="Target Domain or IP" Foreground="{DynamicResource ForegroundBrush}" FontWeight="SemiBold"/>
-                                    <TextBlock Text=" | Status: " Foreground="{DynamicResource SecondaryForegroundBrush}" FontWeight="SemiBold"/>
-                                    <TextBlock Text="{Binding DnsReconStatus}" Foreground="{DynamicResource PrimaryBrush}" FontWeight="Bold"/>
-                                </StackPanel>
+                            <StackPanel Grid.Column="0" Margin="0,0,20,0">
+                                <TextBlock Text="1. Target" Style="{StaticResource SectionLabel}" Margin="0,0,0,8"/>
                                 <Grid>
-                                    <TextBox x:Name="DnsReconTargetInput" Height="40"
+                                    <TextBox Height="42"
                                              Text="{Binding DnsReconTarget, UpdateSourceTrigger=PropertyChanged}"
-                                             ToolTip="Enter target domain (e.g. google.com) or IP (e.g. 8.8.8.8) to discover DNS records"
-                                             VerticalContentAlignment="Center"/>
-                                    <TextBlock IsHitTestVisible="False" Margin="14,12,14,0" Foreground="{DynamicResource SecondaryForegroundBrush}"
-                                               Text="Example: google.com or 8.8.8.8"
+                                             ToolTip="Domain (google.com) or IP (8.8.8.8)"/>
+                                    <TextBlock IsHitTestVisible="False"
+                                               Margin="14,12,14,0"
+                                               Foreground="{DynamicResource MutedForegroundBrush}"
+                                               Text="e.g. google.com or 8.8.8.8"
                                                Visibility="{Binding DnsReconTarget, Converter={StaticResource StringEmptyToVisibilityConverter}}"/>
                                 </Grid>
-                                
-                                <!-- DNS Scan Mode selector -->
-                                <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
-                                    <TextBlock Text="Scan Mode: " Foreground="{DynamicResource ForegroundBrush}" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                                    <RadioButton Content="Quick" Style="{StaticResource PremiumRadio}" VerticalAlignment="Center"
-                                                 IsChecked="{Binding DnsScanMode, Converter={StaticResource RadioStringEqualsConverter}, ConverterParameter=Standard}"/>
-                                    <RadioButton Content="Deep" Style="{StaticResource PremiumRadio}" VerticalAlignment="Center"
-                                                 IsChecked="{Binding DnsScanMode, Converter={StaticResource RadioStringEqualsConverter}, ConverterParameter=Deep}"/>
-                                    <RadioButton Content="Custom" Style="{StaticResource PremiumRadio}" VerticalAlignment="Center"
-                                                 IsChecked="{Binding DnsScanMode, Converter={StaticResource RadioStringEqualsConverter}, ConverterParameter=Custom}"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="1" VerticalAlignment="Bottom">
+                                <TextBlock Style="{StaticResource SectionLabel}" Margin="0,0,0,8">
+                                    <Run Text="Status: "/>
+                                    <Run Text="{Binding DnsReconStatus}" Foreground="{DynamicResource PrimaryBrush}" FontWeight="SemiBold"/>
+                                </TextBlock>
+                                <StackPanel Orientation="Horizontal">
+                                    <Button Content="Scan DNS"
+                                            Command="{Binding StartDnsReconCommand}"
+                                            Style="{StaticResource BaseButton}"
+                                            Width="120" Height="40" Margin="0,0,8,0"/>
+                                    <Button Content="Stop"
+                                            Command="{Binding StopDnsReconCommand}"
+                                            Style="{StaticResource DangerButton}"
+                                            Width="80" Height="40" Margin="0,0,8,0"/>
+                                    <ComboBox ItemsSource="{Binding ExportFormats}"
+                                              SelectedItem="{Binding SelectedExportFormat}"
+                                              Width="90" Height="40" Margin="0,0,8,0"/>
+                                    <Button Content="Export"
+                                            Command="{Binding ExportDnsReconCommand}"
+                                            Style="{StaticResource SuccessButton}"
+                                            Width="100" Height="40"/>
                                 </StackPanel>
                             </StackPanel>
-
-                            <!-- Middle Column: Query Types (Checkboxes for Complete Custom mode) -->
-                            <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Vertical" Margin="0,0,12,0"
-                                        IsEnabled="{Binding DnsScanMode, Converter={StaticResource RadioStringEqualsConverter}, ConverterParameter=Custom}">
-<TextBlock Text="Manual Record Selection (Custom Mode)" Foreground="{DynamicResource ForegroundBrush}" FontWeight="SemiBold" Margin="0,0,0,6"/>
-                                
-                                <UniformGrid Columns="5" Rows="2">
-                                    <CheckBox Content="A" Foreground="{DynamicResource ForegroundBrush}" Margin="0,2,0,2" IsChecked="{Binding DnsQueryA}"/>
-                                    <CheckBox Content="AAAA" Foreground="White" Margin="0,2,0,2" IsChecked="{Binding DnsQueryAAAA}"/>
-                                    <CheckBox Content="MX" Foreground="White" Margin="0,2,0,2" IsChecked="{Binding DnsQueryMX}"/>
-                                    <CheckBox Content="NS" Foreground="White" Margin="0,2,0,2" IsChecked="{Binding DnsQueryNS}"/>
-                                    <CheckBox Content="CNAME" Foreground="White" Margin="0,2,0,2" IsChecked="{Binding DnsQueryCNAME}"/>
-                                    <CheckBox Content="TXT" Foreground="White" Margin="0,2,0,2" IsChecked="{Binding DnsQueryTXT}"/>
-                                    <CheckBox Content="SOA" Foreground="White" Margin="0,2,0,2" IsChecked="{Binding DnsQuerySOA}"/>
-                                    <CheckBox Content="SRV" Foreground="White" Margin="0,2,0,2" IsChecked="{Binding DnsQuerySRV}"/>
-                                    <CheckBox Content="CAA" Foreground="White" Margin="0,2,0,2" IsChecked="{Binding DnsQueryCAA}"/>
-                                    <CheckBox Content="AXFR" Foreground="{DynamicResource ForegroundBrush}" Margin="0,2,0,2" IsChecked="{Binding DnsQueryAXFR}" ToolTip="Attempt authoritative zone transfer"/>
-                                </UniformGrid>
-
-                                <!-- Subdomain brute force and Custom DNS server options -->
-                                <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                                    <CheckBox Content="Brute Force Subdomains" Foreground="{DynamicResource WarningBrush}" VerticalAlignment="Center" IsChecked="{Binding DnsBruteForce}"
-                                              ToolTip="Probes common subdomains (e.g. mail, www, ftp) to discover hidden hosts"/>
-                                    <TextBlock Text=" | Custom Resolver IP:" Foreground="{DynamicResource ForegroundBrush}" VerticalAlignment="Center" Margin="10,0,6,0"/>
-                                    <TextBox Height="28" Width="130" Padding="4,2" Text="{Binding DnsCustomServer, UpdateSourceTrigger=PropertyChanged}"
-                                             ToolTip="Optional: Specify a custom DNS server like 8.8.8.8 to bypass local cache"/>
-                                </StackPanel>
-                            </StackPanel>
-
-                            <!-- Right Column: Commands -->
-                            <StackPanel Grid.Row="0" Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Bottom">
-                                <Button Content="Scan DNS" Command="{Binding StartDnsReconCommand}" Style="{StaticResource BaseButton}" Width="120" Height="40" Margin="0,0,8,0"/>
-                                <Button Content="Stop" Command="{Binding StopDnsReconCommand}" Style="{StaticResource DangerButton}" Width="80" Height="40" Margin="0,0,8,0"/>
-                                <Button Content="Export" Command="{Binding ExportDnsReconCommand}" Style="{StaticResource SuccessButton}" Width="110" Height="40"/>
-                            </StackPanel>
-
-                            <!-- Bottom Row: Inline Filter Search -->
-                            <Grid Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" Margin="0,10,0,0">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="300"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="Filter Search: " Foreground="#B8B8D8" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                                <TextBox Grid.Column="1" Height="32" Padding="6,4" Text="{Binding DnsReconSearchText, UpdateSourceTrigger=PropertyChanged}"
-                                         ToolTip="Instant search through type, domain, value, details..."/>
-                            </Grid>
                         </Grid>
                     </Border>
 
-                    <!-- DNS Records Display Area -->
-                    <Grid Grid.Row="1">
+                    <!-- Step 2: Scan options -->
+                    <Border Grid.Row="1" Style="{StaticResource PanelCard}" Margin="0,0,0,16">
+                        <StackPanel>
+                            <TextBlock Text="2. Scan profile &amp; record types" Style="{StaticResource SectionLabel}" Margin="0,0,0,12"/>
+
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,14">
+                                <RadioButton Content="Quick"
+                                             Margin="0,0,16,0"
+                                             IsChecked="{Binding DnsScanMode, Converter={StaticResource RadioStringEqualsConverter}, ConverterParameter=Standard}"/>
+                                <RadioButton Content="Deep"
+                                             Margin="0,0,16,0"
+                                             IsChecked="{Binding DnsScanMode, Converter={StaticResource RadioStringEqualsConverter}, ConverterParameter=Deep}"/>
+                                <RadioButton Content="Custom"
+                                             IsChecked="{Binding DnsScanMode, Converter={StaticResource RadioStringEqualsConverter}, ConverterParameter=Custom}"/>
+                                <TextBlock Margin="20,0,0,0"
+                                           VerticalAlignment="Center"
+                                           Foreground="{DynamicResource MutedForegroundBrush}"
+                                           FontSize="11"
+                                           Text="Quick: core records · Deep: all types + AXFR + brute force · Custom: pick types"/>
+                            </StackPanel>
+
+                            <Border Background="{DynamicResource SurfaceElevatedBrush}"
+                                    BorderBrush="{DynamicResource BorderBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="8"
+                                    Padding="14"
+                                    IsEnabled="{Binding IsScanOptionsReadOnly, Converter={StaticResource InverseBoolConverter}}">
+                                <StackPanel>
+                                    <UniformGrid Columns="5" Rows="2">
+                                        <CheckBox Content="A" Margin="0,4" IsChecked="{Binding DnsQueryA}"/>
+                                        <CheckBox Content="AAAA" Margin="0,4" IsChecked="{Binding DnsQueryAAAA}"/>
+                                        <CheckBox Content="MX" Margin="0,4" IsChecked="{Binding DnsQueryMX}"/>
+                                        <CheckBox Content="NS" Margin="0,4" IsChecked="{Binding DnsQueryNS}"/>
+                                        <CheckBox Content="CNAME" Margin="0,4" IsChecked="{Binding DnsQueryCNAME}"/>
+                                        <CheckBox Content="TXT" Margin="0,4" IsChecked="{Binding DnsQueryTXT}"/>
+                                        <CheckBox Content="SOA" Margin="0,4" IsChecked="{Binding DnsQuerySOA}"/>
+                                        <CheckBox Content="SRV" Margin="0,4" IsChecked="{Binding DnsQuerySRV}"/>
+                                        <CheckBox Content="CAA" Margin="0,4" IsChecked="{Binding DnsQueryCAA}"/>
+                                        <CheckBox Content="AXFR" Margin="0,4" IsChecked="{Binding DnsQueryAXFR}" ToolTip="Zone transfer attempt"/>
+                                    </UniformGrid>
+
+                                    <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                                        <CheckBox Content="Brute-force subdomains"
+                                                  VerticalAlignment="Center"
+                                                  IsChecked="{Binding DnsBruteForce}"/>
+                                        <TextBlock Text="Custom resolver:"
+                                                   Margin="20,0,8,0"
+                                                   VerticalAlignment="Center"
+                                                   Style="{StaticResource SectionLabel}"/>
+                                        <TextBox Width="160"
+                                                 Height="36"
+                                                 Text="{Binding DnsCustomServer, UpdateSourceTrigger=PropertyChanged}"
+                                                 ToolTip="IP or hostname (e.g. 8.8.8.8 or dns.google). Uses Settings default if empty."/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+
+                            <Grid Margin="0,14,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="280"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0"
+                                           Text="Filter results:"
+                                           VerticalAlignment="Center"
+                                           Style="{StaticResource SectionLabel}"
+                                           Margin="0,0,10,0"/>
+                                <TextBox Grid.Column="1"
+                                         Height="36"
+                                         Text="{Binding DnsReconSearchText, UpdateSourceTrigger=PropertyChanged}"
+                                         ToolTip="Search type, name, value, or details"/>
+                                <TextBlock Grid.Column="2"
+                                           Margin="16,0,0,0"
+                                           VerticalAlignment="Center"
+                                           Foreground="{DynamicResource MutedForegroundBrush}">
+                                    <Run Text="{Binding DnsRecordCount, Mode=OneWay}"/>
+                                    <Run Text=" record(s)"/>
+                                </TextBlock>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Step 3: Results -->
+                    <Grid Grid.Row="2">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="2*"/>
-                            <ColumnDefinition Width="1*"/>
+                            <ColumnDefinition Width="2.2*"/>
+                            <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
 
-                        <!-- Records Grid -->
-                        <DataGrid Grid.Column="0"
-                                  x:Name="DnsReconDataGrid"
-                                  ItemsSource="{Binding DnsRecordsView}"
-                                  SelectedItem="{Binding SelectedDnsRecord}"
-                                  AutoGenerateColumns="False"
-                                  CanUserSortColumns="True"
-                                  HeadersVisibility="Column"
-                                  Margin="0,0,12,0">
-                            <DataGrid.Columns>
-                                <DataGridTextColumn Header="Type" Binding="{Binding RecordType}" Width="100" FontWeight="Bold"/>
-                                <DataGridTextColumn Header="Domain Name" Binding="{Binding Name}" Width="1.5*" />
-                                <DataGridTextColumn Header="Value" Binding="{Binding Value}" Width="2*" />
-                                <DataGridTextColumn Header="Details / Attributes" Binding="{Binding Details}" Width="2*" />
-                            </DataGrid.Columns>
-                        </DataGrid>
+                        <Border Grid.Column="0"
+                                Style="{StaticResource CardBorder}"
+                                Margin="0,0,12,0"
+                                Padding="0">
+                            <Grid>
+                                <ProgressBar Height="3"
+                                             VerticalAlignment="Top"
+                                             Style="{StaticResource BaseProgressBar}"
+                                             IsIndeterminate="True"
+                                             Visibility="{Binding IsDnsReconRunning, Converter={StaticResource BoolToVisibilityConverter}}"/>
 
-                        <!-- Detail Panel -->
-                        <Border Grid.Column="1"
-                                Background="{DynamicResource SurfaceBrush}"
-                                BorderBrush="{DynamicResource BorderBrush}"
-                                BorderThickness="1"
-                                CornerRadius="10"
-                                Padding="16">
+                                <DataGrid x:Name="DnsReconDataGrid"
+                                          ItemsSource="{Binding DnsRecordsView}"
+                                          SelectedItem="{Binding SelectedDnsRecord}"
+                                          Margin="0,4,0,0"
+                                          BorderThickness="0"
+                                          CanUserSortColumns="True">
+                                    <DataGrid.GroupStyle>
+                                        <GroupStyle>
+                                            <GroupStyle.HeaderTemplate>
+                                                <DataTemplate>
+                                                    <Border Background="{DynamicResource SurfaceElevatedBrush}"
+                                                            BorderBrush="{DynamicResource BorderBrush}"
+                                                            BorderThickness="0,0,0,1"
+                                                            Padding="12,8"
+                                                            Margin="0,4,0,0">
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <TextBlock Text="{Binding Name}"
+                                                                       FontWeight="Bold"
+                                                                       Foreground="{DynamicResource PrimaryBrush}"
+                                                                       FontSize="13"/>
+                                                            <TextBlock Text="{Binding ItemCount, StringFormat='  ({0})'}"
+                                                                       Foreground="{DynamicResource SecondaryForegroundBrush}"
+                                                                       FontSize="12"
+                                                                       Margin="4,0,0,0"/>
+                                                        </StackPanel>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </GroupStyle.HeaderTemplate>
+                                            <GroupStyle.ContainerStyle>
+                                                <Style TargetType="{x:Type GroupItem}">
+                                                    <Setter Property="Template">
+                                                        <Setter.Value>
+                                                            <ControlTemplate TargetType="{x:Type GroupItem}">
+                                                                <StackPanel>
+                                                                    <ContentPresenter Content="{TemplateBinding Content}"/>
+                                                                    <ItemsPresenter/>
+                                                                </StackPanel>
+                                                            </ControlTemplate>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                </Style>
+                                            </GroupStyle.ContainerStyle>
+                                        </GroupStyle>
+                                    </DataGrid.GroupStyle>
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="1.4*"/>
+                                        <DataGridTextColumn Header="Value" Binding="{Binding Value}" Width="1.6*"/>
+                                        <DataGridTextColumn Header="Details" Binding="{Binding Details}" Width="2*"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+
+                                <Border Background="{DynamicResource SurfaceBrush}">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                            <Style.Triggers>
+                                                <MultiDataTrigger>
+                                                    <MultiDataTrigger.Conditions>
+                                                        <Condition Binding="{Binding HasDnsRecords}" Value="False"/>
+                                                        <Condition Binding="{Binding IsDnsReconRunning}" Value="False"/>
+                                                    </MultiDataTrigger.Conditions>
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </MultiDataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="360">
+                                        <TextBlock Text="No DNS results yet"
+                                                   FontSize="16"
+                                                   FontWeight="SemiBold"
+                                                   HorizontalAlignment="Center"
+                                                   Margin="0,0,0,8"/>
+                                        <TextBlock Text="Enter a target and run a scan. Results are grouped by record type (A, MX, NS, etc.)."
+                                                   TextAlignment="Center"
+                                                   Foreground="{DynamicResource SecondaryForegroundBrush}"
+                                                   TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+                        </Border>
+
+                        <Border Grid.Column="1" Style="{StaticResource CardBorder}">
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
@@ -224,51 +290,40 @@
                                 </Grid.RowDefinitions>
 
                                 <TextBlock Grid.Row="0"
-                                           Text="DNS Record Inspector"
-                                           FontSize="16"
-                                           FontWeight="Bold"
+                                           Text="Record inspector"
+                                           FontSize="15"
+                                           FontWeight="SemiBold"
                                            Foreground="{DynamicResource PrimaryBrush}"
                                            Margin="0,0,0,12"/>
 
                                 <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
                                     <StackPanel>
-                                        <TextBlock Text="Record Type:" Foreground="{DynamicResource SecondaryForegroundBrush}" FontSize="12" Margin="0,0,0,2"/>
-                                        <TextBlock Text="{Binding SelectedDnsRecord.RecordType}" Foreground="{DynamicResource ForegroundBrush}" FontSize="14" FontWeight="Bold" Margin="0,0,0,12"/>
+                                        <TextBlock Text="Type" Style="{StaticResource SectionLabel}" Margin="0,0,0,4"/>
+                                        <TextBlock Text="{Binding SelectedDnsRecord.RecordType}" FontWeight="SemiBold" Margin="0,0,0,12"/>
 
-                                        <TextBlock Text="Domain / Host:" Foreground="{DynamicResource SecondaryForegroundBrush}" FontSize="12" Margin="0,0,0,2"/>
-                                        <TextBlock Text="{Binding SelectedDnsRecord.Name}" Foreground="{DynamicResource ForegroundBrush}" FontSize="14" Margin="0,0,0,12" TextWrapping="Wrap"/>
+                                        <TextBlock Text="Name" Style="{StaticResource SectionLabel}" Margin="0,0,0,4"/>
+                                        <TextBlock Text="{Binding SelectedDnsRecord.Name}" TextWrapping="Wrap" Margin="0,0,0,12"/>
 
-                                        <TextBlock Text="IP / Target Value:" Foreground="{DynamicResource SecondaryForegroundBrush}" FontSize="12" Margin="0,0,0,2"/>
+                                        <TextBlock Text="Value" Style="{StaticResource SectionLabel}" Margin="0,0,0,4"/>
                                         <TextBox IsReadOnly="True"
-                                                 Background="{DynamicResource SurfaceBrush}"
                                                  BorderThickness="0"
+                                                 Background="Transparent"
                                                  Text="{Binding SelectedDnsRecord.Value, Mode=OneWay}"
-                                                 FontSize="14"
-                                                 Foreground="{DynamicResource ForegroundBrush}"
                                                  TextWrapping="Wrap"
-                                                 Padding="4"
                                                  Margin="0,0,0,12"/>
 
-                                        <TextBlock Text="Parsed Properties &amp; TTL Details:" Foreground="{DynamicResource SecondaryForegroundBrush}" FontSize="12" Margin="0,0,0,2"/>
+                                        <TextBlock Text="Details" Style="{StaticResource SectionLabel}" Margin="0,0,0,4"/>
                                         <TextBox IsReadOnly="True"
-                                                 Background="{DynamicResource SurfaceBrush}"
-                                                 BorderThickness="0"
-                                                 Height="180"
-                                                 Text="{Binding SelectedDnsRecord.Details, Mode=OneWay}"
-                                                 FontSize="14"
-                                                 Foreground="{DynamicResource ForegroundBrush}"
-                                                 TextWrapping="Wrap"
-                                                 VerticalScrollBarVisibility="Auto"
-                                                 Padding="6"
-                                                 AcceptsReturn="True"/>
+                                                 Style="{StaticResource ConsoleTextBox}"
+                                                 Height="160"
+                                                 Text="{Binding SelectedDnsRecord.Details, Mode=OneWay}"/>
 
-                                        <Button Content="📋 Copy Value" 
-                                                Command="{Binding CopyDnsRecordValueCommand}" 
-                                                HorizontalAlignment="Left" 
-                                                Margin="0,10,0,0" 
-                                                Width="130" Height="32" 
-                                                FontWeight="Bold"
-                                                ToolTip="Copy the selected record value to clipboard"/>
+                                        <Button Content="Copy value"
+                                                Command="{Binding CopyDnsRecordValueCommand}"
+                                                Style="{StaticResource BaseButton}"
+                                                HorizontalAlignment="Left"
+                                                Margin="0,12,0,0"
+                                                Width="120" Height="34"/>
                                     </StackPanel>
                                 </ScrollViewer>
                             </Grid>
@@ -277,91 +332,77 @@
                 </Grid>
             </TabItem>
 
-            <!-- ============================== -->
-            <!-- SUB-TAB 2: INTERACTIVE NSLOOKUP -->
-            <!-- ============================== -->
-            <TabItem Header="Interactive NSLOOKUP">
-                <Grid Margin="0,10,0,0">
+            <!-- NSLOOKUP -->
+            <TabItem Header="NSLOOKUP">
+                <Grid Margin="0,16,0,0">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
-                    <Border Grid.Row="0" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="10" Padding="16" Margin="0,0,0,12">
+                    <Border Grid.Row="0" Style="{StaticResource PanelCard}">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="150"/>
-                                <ColumnDefinition Width="200"/>
+                                <ColumnDefinition Width="140"/>
+                                <ColumnDefinition Width="180"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
 
-                            <!-- Domain Query -->
                             <StackPanel Grid.Column="0" Margin="0,0,12,0">
-                                <TextBlock Text="Query Host / IP" Foreground="{DynamicResource ForegroundBrush}" FontWeight="SemiBold" Margin="0,0,0,6"/>
-                                <TextBox Height="40" Text="{Binding NslookupTarget, UpdateSourceTrigger=PropertyChanged}" ToolTip="Enter host (e.g. google.com)"/>
+                                <TextBlock Text="Host / IP" Style="{StaticResource SectionLabel}" Margin="0,0,0,8"/>
+                                <TextBox Height="40" Text="{Binding NslookupTarget, UpdateSourceTrigger=PropertyChanged}"/>
                             </StackPanel>
 
-                            <!-- Query Type -->
                             <StackPanel Grid.Column="1" Margin="0,0,12,0">
-                                <TextBlock Text="Record Type" Foreground="{DynamicResource ForegroundBrush}" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                                <TextBlock Text="Record type" Style="{StaticResource SectionLabel}" Margin="0,0,0,8"/>
                                 <ComboBox Height="40" ItemsSource="{Binding NslookupRecordTypes}" SelectedItem="{Binding NslookupRecordType}"/>
                             </StackPanel>
 
-                            <!-- DNS Server -->
                             <StackPanel Grid.Column="2" Margin="0,0,12,0">
-                                <TextBlock Text="Resolver Server IP" Foreground="{DynamicResource ForegroundBrush}" FontWeight="SemiBold" Margin="0,0,0,6"/>
-                                <TextBox Height="40" Text="{Binding NslookupServer, UpdateSourceTrigger=PropertyChanged}" ToolTip="Optional: Custom DNS resolver (e.g. 1.1.1.1). Leave empty to use system default."/>
+                                <TextBlock Text="Resolver (optional)" Style="{StaticResource SectionLabel}" Margin="0,0,0,8"/>
+                                <TextBox Height="40" Text="{Binding NslookupServer, UpdateSourceTrigger=PropertyChanged}" ToolTip="IP or hostname"/>
                             </StackPanel>
 
-                            <!-- Query Command -->
                             <StackPanel Grid.Column="3" VerticalAlignment="Bottom">
-                                <Button Content="Run NSLOOKUP" Command="{Binding RunNslookupCommand}" Width="160" Height="40"/>
+                                <TextBlock Style="{StaticResource StatusBadge}" Margin="0,0,0,8" Text="{Binding NslookupStatus}"/>
+                                <StackPanel Orientation="Horizontal">
+                                    <Button Content="Run query" Command="{Binding RunNslookupCommand}" Style="{StaticResource BaseButton}" Width="120" Height="40" Margin="0,0,8,0"/>
+                                    <Button Content="Stop" Command="{Binding StopNslookupCommand}" Style="{StaticResource DangerButton}" Width="80" Height="40"/>
+                                </StackPanel>
                             </StackPanel>
                         </Grid>
                     </Border>
 
-                    <Border Grid.Row="1" Background="#1E1E2E" BorderBrush="#383850" BorderThickness="1" CornerRadius="10" Padding="16">
+                    <Border Grid.Row="1" Style="{StaticResource CardBorder}">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
                             <Grid Grid.Row="0" Margin="0,0,0,10">
-                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
-                                    <TextBlock Text="DNS Query Audit Output (dig format)" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource PrimaryBrush}"/>
-                                    <TextBlock Text=" | Status: " Foreground="#8888A8"/>
-                                    <TextBlock Text="{Binding NslookupStatus}" Foreground="#F59E0B" FontWeight="Bold"/>
-                                </StackPanel>
-                                <Button Content="📋 Copy Output" 
-                                        Command="{Binding CopyNslookupCommand}" 
-                                        HorizontalAlignment="Right" 
-                                        Width="140" Height="30" 
-                                        FontWeight="Bold"
-                                        ToolTip="Copy NSLOOKUP output to clipboard"/>
+                                <TextBlock Text="Query output" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryBrush}"/>
+                                <Button Content="Copy output"
+                                        Command="{Binding CopyNslookupCommand}"
+                                        Style="{StaticResource BaseButton}"
+                                        HorizontalAlignment="Right"
+                                        Width="120" Height="32"/>
                             </Grid>
-                            <TextBox Grid.Row="1" IsReadOnly="True" AcceptsReturn="True"
-                                     Text="{Binding NslookupResultText}"
-                                     Background="#11111B" BorderBrush="#383850" BorderThickness="1"
-                                     Foreground="#A8E6A8" FontFamily="Consolas, Courier New" FontSize="13" Padding="12"
-                                     VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"
-                                     TextWrapping="NoWrap"/>
+                            <TextBox Grid.Row="1" Style="{StaticResource ConsoleTextBox}" Text="{Binding NslookupResultText, Mode=OneWay}"/>
                         </Grid>
                     </Border>
                 </Grid>
             </TabItem>
 
-            <!-- ====================== -->
-            <!-- SUB-TAB 3: WHOIS SCAN  -->
-            <!-- ====================== -->
-            <TabItem Header="WHOIS Lookup">
-                <Grid Margin="0,10,0,0">
+            <!-- WHOIS -->
+            <TabItem Header="WHOIS">
+                <Grid Margin="0,16,0,0">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
-                    <Border Grid.Row="0" Background="#1E1E2E" BorderBrush="#383850" BorderThickness="1" CornerRadius="10" Padding="14" Margin="0,0,0,12">
+                    <Border Grid.Row="0" Style="{StaticResource PanelCard}">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
@@ -369,41 +410,37 @@
                             </Grid.ColumnDefinitions>
 
                             <StackPanel Grid.Column="0" Margin="0,0,12,0">
-                                <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
-                                    <TextBlock Text="Query Target (Domain Name or IPv4 Address)" Foreground="{DynamicResource ForegroundBrush}" FontWeight="SemiBold"/>
-                                    <TextBlock Text=" | Status: " Foreground="{DynamicResource SecondaryForegroundBrush}"/>
-                                    <TextBlock Text="{Binding WhoisStatus}" Foreground="{DynamicResource WarningBrush}" FontWeight="Bold"/>
-                                </StackPanel>
-                                <TextBox Height="40" Text="{Binding WhoisTarget, UpdateSourceTrigger=PropertyChanged}" ToolTip="Enter a domain name (e.g. google.com) or an IP address (e.g. 8.8.8.8) to lookup registration information"/>
+                                <TextBlock Style="{StaticResource SectionLabel}" Margin="0,0,0,8">
+                                    <Run Text="Domain or IP · "/>
+                                    <Run Text="{Binding WhoisStatus}" Foreground="{DynamicResource WarningBrush}"/>
+                                </TextBlock>
+                                <TextBox Height="40" Text="{Binding WhoisTarget, UpdateSourceTrigger=PropertyChanged}"/>
                             </StackPanel>
 
                             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Bottom">
-                                <Button Content="Perform WHOIS" Command="{Binding StartWhoisCommand}" Width="160" Height="40" Margin="0,0,8,0"/>
-                                <Button Content="Stop" Command="{Binding StopWhoisCommand}" Style="{StaticResource StopButton}" Width="80" Height="40"/>
+                                <Button Content="Lookup WHOIS" Command="{Binding StartWhoisCommand}" Style="{StaticResource BaseButton}" Width="140" Height="40" Margin="0,0,8,0"/>
+                                <Button Content="Stop" Command="{Binding StopWhoisCommand}" Style="{StaticResource DangerButton}" Width="80" Height="40"/>
                             </StackPanel>
                         </Grid>
                     </Border>
 
-                    <Border Grid.Row="1" Background="#1E1E2E" BorderBrush="#383850" BorderThickness="1" CornerRadius="10" Padding="16">
+                    <Border Grid.Row="1" Style="{StaticResource CardBorder}">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
-                            <Grid Grid.Row="0" Margin="0,0,0,10">
-                                <TextBlock Text="Domain Registration WHOIS Registry Output" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource PrimaryBrush}" HorizontalAlignment="Left"/>
-                                <Button Content="📋 Copy Output" 
-                                        Command="{Binding CopyWhoisCommand}" 
-                                        HorizontalAlignment="Right" 
-                                        Width="140" Height="30" 
-                                        FontWeight="Bold"
-                                        ToolTip="Copy WHOIS output to clipboard"/>
-                            </Grid>
-                            <TextBox Grid.Row="1" IsReadOnly="True" AcceptsReturn="True"
-                                     Text="{Binding WhoisResultText}"
-                                     Background="#11111B" BorderBrush="#383850" BorderThickness="1"
-                                     Foreground="{DynamicResource ForegroundBrush}" FontFamily="Consolas, Courier New" FontSize="13"
-                                     VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" Padding="10"/>
+                            <Button Grid.Row="0"
+                                    Content="Copy output"
+                                    Command="{Binding CopyWhoisCommand}"
+                                    Style="{StaticResource BaseButton}"
+                                    HorizontalAlignment="Right"
+                                    Width="120" Height="32"
+                                    Margin="0,0,0,10"/>
+                            <TextBox Grid.Row="1"
+                                     Style="{StaticResource ConsoleTextBox}"
+                                     Foreground="{DynamicResource ForegroundBrush}"
+                                     Text="{Binding WhoisResultText, Mode=OneWay}"/>
                         </Grid>
                     </Border>
                 </Grid>

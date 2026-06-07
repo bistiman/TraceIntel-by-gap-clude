@@ -200,11 +200,7 @@
 
         <!-- Input Section: Only visible in Traceroute Diagnostics -->
         <Border Grid.Row="0"
-                Background="{DynamicResource SurfaceElevatedBrush}"
-                BorderBrush="{DynamicResource BorderBrush}"
-                BorderThickness="1"
-                CornerRadius="10"
-                Padding="20"
+                Style="{StaticResource PanelCard}"
                 Margin="0,0,0,24">
             <Grid>
                 <Grid.ColumnDefinitions>
