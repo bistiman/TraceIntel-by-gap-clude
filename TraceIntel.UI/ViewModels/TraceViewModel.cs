@@ -135,6 +135,8 @@ namespace TraceIntel.UI.ViewModels
             }
         }
 
+        public bool HasHopSections => HopSections.Count > 0;
+
         public ICommand StartCommand { get; }
         public ICommand StopCommand { get; }
         public ICommand ExportCommand { get; }
@@ -156,6 +158,8 @@ namespace TraceIntel.UI.ViewModels
             RoutingRowsView = CollectionViewSource.GetDefaultView(RoutingRows);
             RoutingRowsView.SortDescriptions.Add(new SortDescription(nameof(RoutingRow.Domain), ListSortDirection.Ascending));
             RoutingRowsView.Filter = RoutingFilter;
+
+            HopSections.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasHopSections));
 
             ApplyHopMode();
         }
@@ -477,12 +481,13 @@ namespace TraceIntel.UI.ViewModels
             if (section == null)
             {
                 section = new HopSection(hopNumber);
-                HopSections.Add(section);
+                var insertIndex = 0;
+                while (insertIndex < HopSections.Count && HopSections[insertIndex].HopNumber < hopNumber)
+                {
+                    insertIndex++;
+                }
 
-                // Keep hop cards ordered
-                var ordered = HopSections.OrderBy(s => s.HopNumber).ToList();
-                HopSections.Clear();
-                foreach (var s in ordered) HopSections.Add(s);
+                HopSections.Insert(insertIndex, section);
             }
 
             section.Upsert(domain, ip);
@@ -824,10 +829,17 @@ namespace TraceIntel.UI.ViewModels
     public sealed class HopSection : ViewModelBase
     {
         private string _filterText = string.Empty;
+        private int _recordCount;
 
         public int HopNumber { get; }
         public ObservableCollection<HopRow> Rows { get; } = new();
         public ICollectionView RowsView { get; }
+
+        public int RecordCount
+        {
+            get => _recordCount;
+            private set => SetProperty(ref _recordCount, value);
+        }
 
         public string FilterText
         {
@@ -837,6 +849,7 @@ namespace TraceIntel.UI.ViewModels
                 if (SetProperty(ref _filterText, value))
                 {
                     RowsView.Refresh();
+                    UpdateRecordCount();
                 }
             }
         }
@@ -855,6 +868,8 @@ namespace TraceIntel.UI.ViewModels
                 return (row.Domain?.Contains(f, StringComparison.OrdinalIgnoreCase) ?? false) ||
                        (row.IP?.Contains(f, StringComparison.OrdinalIgnoreCase) ?? false);
             };
+
+            Rows.CollectionChanged += (_, _) => UpdateRecordCount();
         }
 
         public void Upsert(string domain, string ip)
@@ -867,6 +882,12 @@ namespace TraceIntel.UI.ViewModels
             }
 
             existing.IP = ip;
+            UpdateRecordCount();
+        }
+
+        private void UpdateRecordCount()
+        {
+            RecordCount = RowsView.Cast<object>().Count();
         }
     }
 }

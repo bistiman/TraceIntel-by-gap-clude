@@ -42,14 +42,14 @@ namespace TraceIntel.UI.Views
 
             RoutingDataGrid.Columns.Clear();
 
-            // Fixed columns
+            // Fixed columns with improved width handling
             RoutingDataGrid.Columns.Add(new DataGridTextColumn
             {
                 Header = "Domain",
                 Binding = new Binding(nameof(RoutingRow.Domain)),
                 ClipboardContentBinding = new Binding(nameof(RoutingRow.Domain)),
                 Width = new DataGridLength(1, DataGridLengthUnitType.Star),
-                MinWidth = 220,
+                MinWidth = 240,
                 CanUserSort = true,
                 SortMemberPath = nameof(RoutingRow.Domain)
             });
@@ -59,7 +59,8 @@ namespace TraceIntel.UI.Views
                 Header = "Destination",
                 Binding = new Binding(nameof(RoutingRow.Destination)),
                 ClipboardContentBinding = new Binding(nameof(RoutingRow.Destination)),
-                Width = new DataGridLength(180),
+                Width = new DataGridLength(200),
+                MinWidth = 180,
                 CanUserSort = true,
                 SortMemberPath = nameof(RoutingRow.Destination)
             });
@@ -69,7 +70,8 @@ namespace TraceIntel.UI.Views
                 Header = "Resolved",
                 Binding = new Binding(nameof(RoutingRow.ResolvedDestination)),
                 ClipboardContentBinding = new Binding(nameof(RoutingRow.ResolvedDestination)),
-                Width = new DataGridLength(260),
+                Width = new DataGridLength(280),
+                MinWidth = 240,
                 CanUserSort = true,
                 SortMemberPath = nameof(RoutingRow.ResolvedDestination)
             });
@@ -89,7 +91,8 @@ namespace TraceIntel.UI.Views
                 {
                     Header = header,
                     HeaderTemplate = headerTemplate,
-                    Width = new DataGridLength(hop <= 5 ? 170 : 140),
+                    Width = new DataGridLength(hop <= 5 ? 180 : 150),
+                    MinWidth = hop <= 5 ? 160 : 140,
                     CanUserSort = true,
                     SortMemberPath = $"Hops[{hopIndex}].IP",
                     ClipboardContentBinding = new Binding($"Hops[{hopIndex}].IP")
