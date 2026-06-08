@@ -58,7 +58,7 @@
                     </Grid>
 
                     <TextBlock Text="Default DNS resolver" Style="{StaticResource SectionLabel}" Margin="0,0,0,8"/>
-                    <TextBox Height="42"
+                    <TextBox Tag="e.g. 8.8.8.8"
                              Text="{Binding SettingsDefaultDnsServer, UpdateSourceTrigger=PropertyChanged}"
                              ToolTip="Prefills DNS Recon custom resolver (e.g. 1.1.1.1)"/>
                     <TextBlock Text="Used when DNS Recon custom resolver is empty."
@@ -71,7 +71,7 @@
                               IsChecked="{Binding SettingsEnableCache}"/>
 
                     <TextBlock Text="Default export path" Style="{StaticResource SectionLabel}" Margin="0,0,0,8"/>
-                    <TextBox Height="42"
+                    <TextBox Tag="e.g. C:\Exports"
                              Text="{Binding SettingsDefaultExportPath, UpdateSourceTrigger=PropertyChanged}"/>
                 </StackPanel>
             </ScrollViewer>

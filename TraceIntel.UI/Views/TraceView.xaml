@@ -35,11 +35,13 @@
                            FontSize="11"
                            Foreground="White"/>
                 <TextBox Height="26"
+                          MinHeight="26"
                           Margin="0,6,0,0"
                           Padding="6,3"
                           FontSize="11"
                           Text="{Binding FilterText, UpdateSourceTrigger=PropertyChanged}"
-                          ToolTip="Filter this hop (IP)"/>
+                          ToolTip="Filter this hop (IP)"
+                          Tag="Filter hop..."/>
             </StackPanel>
         </DataTemplate>
 
@@ -234,17 +236,9 @@
                                      HorizontalScrollBarVisibility="Disabled"
                                      MinHeight="110"
                                      MaxHeight="170"
-                                     Padding="12,10"
-                                     FontSize="12"
+                                     FontSize="13"
+                                     Tag="google.com&#x0a;8.8.8.8&#x0a;https://example.com/path"
                                      ToolTip="Examples: google.com | 8.8.8.8 | https://example.com/path"/>
-
-                            <!-- Simple watermark -->
-                            <TextBlock IsHitTestVisible="False"
-                                       Margin="14,12,14,0"
-                                       Foreground="{DynamicResource MutedForegroundBrush}"
-                                       FontSize="12"
-                                       Text="google.com&#x0a;8.8.8.8&#x0a;https://example.com/path"
-                                       Visibility="{Binding DomainsInput, Converter={StaticResource StringEmptyToVisibilityConverter}}"/>
                         </Grid>
 
                         <StackPanel Grid.Column="1" Margin="18,0,0,0" VerticalAlignment="Top">
@@ -270,9 +264,7 @@
 
                             <TextBox Text="{Binding CustomMaxHops, UpdateSourceTrigger=PropertyChanged}"
                                      Width="120"
-                                     Height="40"
-                                     Padding="8,8"
-                                     FontSize="12"
+                                     FontSize="13"
                                      VerticalContentAlignment="Center"
                                      IsEnabled="{Binding HopMode, Converter={StaticResource RadioStringEqualsConverter}, ConverterParameter=Custom}"
                                      ToolTip="Custom max hops (1-255)"/>
@@ -303,8 +295,6 @@
                     <ComboBox ItemsSource="{Binding ExportFormats}"
                               SelectedItem="{Binding SelectedExportFormat}"
                               Width="140"
-                              Height="40"
-                              Padding="8,8"
                               Margin="0,0,0,8"/>
                     <Button Content="Export Data"
                             Command="{Binding ExportCommand}"
@@ -389,9 +379,8 @@
                                            Margin="0,0,0,8"
                                            Foreground="{DynamicResource ForegroundBrush}"/>
                                 <TextBox x:Name="GlobalSearchBox"
-                                         Height="40"
-                                         Padding="12,8"
-                                         FontSize="12"
+                                         FontSize="13"
+                                         Tag="Search domain, dest, or hop IP..."
                                          Text="{Binding GlobalSearchText, UpdateSourceTrigger=PropertyChanged}"
                                          ToolTip="Search across domain, destination, and all hops (Ctrl+F to focus)"
                                          VerticalContentAlignment="Center"/>
@@ -583,12 +572,11 @@
                                             </StackPanel>
 
                                             <TextBox Grid.Row="1"
-                                                     Margin="0,0,0,12"
-                                                     Height="38"
-                                                     Padding="10,8"
-                                                     FontSize="12"
                                                      Text="{Binding FilterText, UpdateSourceTrigger=PropertyChanged}"
-                                                     ToolTip="Filter by domain or IP"/>
+                                                     Margin="0,4,0,0"
+                                                     MinHeight="28"
+                                                     Tag="Filter IP or host..."
+                                                     ToolTip="Filter records by IP or Hostname"/>
 
                                             <DataGrid Grid.Row="2"
                                                       ItemsSource="{Binding RowsView}"

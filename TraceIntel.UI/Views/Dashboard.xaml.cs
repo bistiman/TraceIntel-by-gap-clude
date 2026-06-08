@@ -10,4 +10,4 @@ namespace TraceIntel.UI.Views
             InitializeComponent();
         }
     }
-}
+}   

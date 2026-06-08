@@ -27,7 +27,7 @@
                         <Run Text=" · Latency: " Foreground="{DynamicResource MutedForegroundBrush}"/>
                         <Run Text="{Binding PingLatency}" Foreground="{DynamicResource SuccessBrush}" FontWeight="SemiBold"/>
                     </TextBlock>
-                    <TextBox Height="42"
+                    <TextBox Tag="e.g. google.com or 8.8.8.8"
                              Text="{Binding PingTarget, UpdateSourceTrigger=PropertyChanged}"
                              ToolTip="e.g. google.com or 8.8.8.8"/>
                 </StackPanel>

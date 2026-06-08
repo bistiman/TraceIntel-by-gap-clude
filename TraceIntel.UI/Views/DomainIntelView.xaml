@@ -62,16 +62,9 @@
 
                             <StackPanel Grid.Column="0" Margin="0,0,20,0">
                                 <TextBlock Text="1. Target" Style="{StaticResource SectionLabel}" Margin="0,0,0,8"/>
-                                <Grid>
-                                    <TextBox Height="42"
-                                             Text="{Binding DnsReconTarget, UpdateSourceTrigger=PropertyChanged}"
-                                             ToolTip="Domain (google.com) or IP (8.8.8.8)"/>
-                                    <TextBlock IsHitTestVisible="False"
-                                               Margin="14,12,14,0"
-                                               Foreground="{DynamicResource MutedForegroundBrush}"
-                                               Text="e.g. google.com or 8.8.8.8"
-                                               Visibility="{Binding DnsReconTarget, Converter={StaticResource StringEmptyToVisibilityConverter}}"/>
-                                </Grid>
+                                <TextBox Text="{Binding DnsReconTarget, UpdateSourceTrigger=PropertyChanged}"
+                                         Tag="e.g. google.com or 8.8.8.8"
+                                         ToolTip="Domain (google.com) or IP (8.8.8.8)"/>
                             </StackPanel>
 
                             <StackPanel Grid.Column="1" VerticalAlignment="Bottom">
@@ -90,7 +83,7 @@
                                             Width="80" Height="40" Margin="0,0,8,0"/>
                                     <ComboBox ItemsSource="{Binding ExportFormats}"
                                               SelectedItem="{Binding SelectedExportFormat}"
-                                              Width="90" Height="40" Margin="0,0,8,0"/>
+                                              Width="90" Margin="0,0,8,0"/>
                                     <Button Content="Export"
                                             Command="{Binding ExportDnsReconCommand}"
                                             Style="{StaticResource SuccessButton}"
@@ -150,8 +143,10 @@
                                                    VerticalAlignment="Center"
                                                    Style="{StaticResource SectionLabel}"/>
                                         <TextBox Width="160"
-                                                 Height="36"
-                                                 Text="{Binding DnsCustomServer, UpdateSourceTrigger=PropertyChanged}"
+                                                 Margin="0"
+                                                 Tag="e.g. 1.1.1.1"
+                                                 VerticalContentAlignment="Center"
+                                                 Text="{Binding DnsReconCustomResolver, UpdateSourceTrigger=PropertyChanged}"
                                                  ToolTip="IP or hostname (e.g. 8.8.8.8 or dns.google). Uses Settings default if empty."/>
                                     </StackPanel>
                                 </StackPanel>
@@ -169,9 +164,9 @@
                                            Style="{StaticResource SectionLabel}"
                                            Margin="0,0,10,0"/>
                                 <TextBox Grid.Column="1"
-                                         Height="36"
-                                         Text="{Binding DnsReconSearchText, UpdateSourceTrigger=PropertyChanged}"
-                                         ToolTip="Search type, name, value, or details"/>
+                                         Margin="0,0,24,0"
+                                         Tag="Filter result by string..."
+                                         Text="{Binding DnsFilterText, UpdateSourceTrigger=PropertyChanged}"/>
                                 <TextBlock Grid.Column="2"
                                            Margin="16,0,0,0"
                                            VerticalAlignment="Center"
@@ -206,6 +201,7 @@
                                           SelectedItem="{Binding SelectedDnsRecord}"
                                           Margin="0,4,0,0"
                                           BorderThickness="0"
+                                          AutoGenerateColumns="False"
                                           CanUserSortColumns="True">
                                     <DataGrid.GroupStyle>
                                         <GroupStyle>
@@ -351,17 +347,17 @@
 
                             <StackPanel Grid.Column="0" Margin="0,0,12,0">
                                 <TextBlock Text="Host / IP" Style="{StaticResource SectionLabel}" Margin="0,0,0,8"/>
-                                <TextBox Height="40" Text="{Binding NslookupTarget, UpdateSourceTrigger=PropertyChanged}"/>
+                                <TextBox Tag="e.g. google.com" Text="{Binding NslookupTarget, UpdateSourceTrigger=PropertyChanged}"/>
                             </StackPanel>
 
                             <StackPanel Grid.Column="1" Margin="0,0,12,0">
                                 <TextBlock Text="Record type" Style="{StaticResource SectionLabel}" Margin="0,0,0,8"/>
-                                <ComboBox Height="40" ItemsSource="{Binding NslookupRecordTypes}" SelectedItem="{Binding NslookupRecordType}"/>
+                                <ComboBox ItemsSource="{Binding NslookupRecordTypes}" SelectedItem="{Binding NslookupRecordType}"/>
                             </StackPanel>
 
                             <StackPanel Grid.Column="2" Margin="0,0,12,0">
                                 <TextBlock Text="Resolver (optional)" Style="{StaticResource SectionLabel}" Margin="0,0,0,8"/>
-                                <TextBox Height="40" Text="{Binding NslookupServer, UpdateSourceTrigger=PropertyChanged}" ToolTip="IP or hostname"/>
+                                <TextBox Tag="e.g. 1.1.1.1" Text="{Binding NslookupServer, UpdateSourceTrigger=PropertyChanged}" ToolTip="IP or hostname"/>
                             </StackPanel>
 
                             <StackPanel Grid.Column="3" VerticalAlignment="Bottom">
@@ -414,7 +410,7 @@
                                     <Run Text="Domain or IP · "/>
                                     <Run Text="{Binding WhoisStatus}" Foreground="{DynamicResource WarningBrush}"/>
                                 </TextBlock>
-                                <TextBox Height="40" Text="{Binding WhoisTarget, UpdateSourceTrigger=PropertyChanged}"/>
+                                <TextBox Tag="e.g. example.com" Text="{Binding WhoisTarget, UpdateSourceTrigger=PropertyChanged}"/>
                             </StackPanel>
 
                             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Bottom">
