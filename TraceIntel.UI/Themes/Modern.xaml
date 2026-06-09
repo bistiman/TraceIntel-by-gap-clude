@@ -2,27 +2,32 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:system="clr-namespace:System;assembly=mscorlib">
 
-  <!-- ============================================================ -->
-  <!-- COLOR PALETTE — cybersecurity/hacker-inspired dark-mode     -->
-  <!-- ============================================================ -->
-  <Color x:Key="BackgroundDark">#050807</Color>        <!-- Very dark terminal background -->
-  <Color x:Key="SurfaceDark">#0A0F0D</Color>           <!-- Solid card/container dark bg -->
-  <Color x:Key="SurfaceElevated">#0F1814</Color>        <!-- Textbox/combo rest state background -->
-  <Color x:Key="BorderColor">#1A2E24</Color>             <!-- Terminal green-tinted border -->
-  <Color x:Key="PrimaryAccent">#00FF66</Color>          <!-- Neon green accent -->
-  <Color x:Key="SecondaryAccent">#33FF88</Color>        <!-- Lighter neon hover accent -->
-  <Color x:Key="SuccessGreen">#00FF66</Color>           <!-- Success status -->
-  <Color x:Key="ErrorRed">#FF3333</Color>               <!-- Failure status -->
-  <Color x:Key="WarningYellow">#FFB800</Color>          <!-- Warning status -->
+    <!-- ============================================================ -->
+    <!-- COLOR PALETTE — Modern Hacker Dark                           -->
+    <!-- ============================================================ -->
 
-  <!-- Text -->
-  <Color x:Key="ForegroundPrimary">#E0FFE8</Color>     <!-- High contrast minty white -->
-  <Color x:Key="ForegroundSecondary">#A0C0A8</Color>   <!-- Muted body text -->
-  <Color x:Key="ForegroundMuted">#507A60</Color>        <!-- Low contrast placeholder/labels -->
-  <Color x:Key="ForegroundDisabled">#20382B</Color>     <!-- Disabled state -->
+    <Color x:Key="BackgroundDark">#080909</Color>
+    <Color x:Key="SurfaceDark">#111313</Color>
+    <Color x:Key="SurfaceElevated">#1A1D1C</Color>
 
-  <!-- ============================================================ -->
-  <!-- SOLID COLOR BRUSHES                                          -->
+    <Color x:Key="BorderColor">#2A3431</Color>
+
+    <!-- Dark Emerald Accent -->
+    <Color x:Key="PrimaryAccent">#00C853</Color>
+    <Color x:Key="SecondaryAccent">#32D87B</Color>
+
+    <Color x:Key="SuccessGreen">#00C853</Color>
+    <Color x:Key="ErrorRed">#FF4D4D</Color>
+    <Color x:Key="WarningYellow">#FFB800</Color>
+
+    <!-- Text -->
+    <Color x:Key="ForegroundPrimary">#F5FFF8</Color>
+    <Color x:Key="ForegroundSecondary">#B5C8BC</Color>
+    <Color x:Key="ForegroundMuted">#6D8578</Color>
+    <Color x:Key="ForegroundDisabled">#47564E</Color>
+
+    <!-- ============================================================ -->
+  <!-- SOLID COLOR BRUSHES                                          --> 
   <!-- ============================================================ -->
   <SolidColorBrush x:Key="BackgroundBrush"          Color="{StaticResource BackgroundDark}" />
   <SolidColorBrush x:Key="SurfaceBrush"             Color="{StaticResource SurfaceDark}" />
@@ -38,10 +43,10 @@
   <SolidColorBrush x:Key="MutedForegroundBrush"     Color="{StaticResource ForegroundMuted}" />
   <SolidColorBrush x:Key="CardBackgroundBrush"      Color="{StaticResource SurfaceDark}" />
   <SolidColorBrush x:Key="InputSurfaceBrush"        Color="{StaticResource SurfaceElevated}" />
-  <SolidColorBrush x:Key="ConsoleBackgroundBrush"   Color="#030605" />
-  <SolidColorBrush x:Key="ConsoleForegroundBrush"   Color="#00FF66" />
+   <SolidColorBrush x:Key="ConsoleBackgroundBrush" Color="#050606"/>
+   <SolidColorBrush x:Key="ConsoleForegroundBrush" Color="#00C853"/>
 
-  <!-- ============================================================ -->
+    <!-- ============================================================ -->
   <!-- TYPOGRAPHY                                                   -->
   <!-- ============================================================ -->
   <FontFamily x:Key="DefaultFontFamily">Segoe UI, Inter, Arial, sans-serif</FontFamily>
